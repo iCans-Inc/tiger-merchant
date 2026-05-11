@@ -180,6 +180,7 @@ a{color:inherit;text-decoration:none;}
 }
 .tg-rate-card-upload strong { display: block; font-size: 13px; font-weight: 600; color: var(--ink); }
 .tg-rate-card-upload em { display: block; font-size: 11px; color: var(--text-muted); font-style: normal; margin-top: 1px; }
+.tg-file-chosen { font-size: 12px; color: var(--brand-deep); font-weight: 600; margin-top: 4px; }
 
 /* Bank trust notice */
 .tg-bank-trust {
@@ -241,6 +242,14 @@ a{color:inherit;text-decoration:none;}
 .va-consent input:checked~.va-consent-box { background: var(--brand); border-color: var(--brand); color: white; }
 .va-consent-box svg { opacity: 0; transition: opacity .15s ease; color: white; }
 .va-consent input:checked~.va-consent-box svg { opacity: 1; }
+
+/* ── Error banner ──────────────────────────────────── */
+.tg-error-banner {
+  background: #FFF0EF; border: 1px solid rgba(201,53,43,0.3);
+  border-radius: 10px; padding: 10px 14px;
+  font-size: 13px; color: var(--danger); font-weight: 500;
+  margin-bottom: 8px;
+}
 
 /* ── Variation B layout ────────────────────────────── */
 .vb-body {
@@ -604,6 +613,90 @@ a{color:inherit;text-decoration:none;}
 
 /* ── Animations pulse ──────────────────────────────── */
 @keyframes vbpulse { 50%{box-shadow:0 0 0 8px rgba(63,185,76,0);} }
+
+/* ── Mobile stepper ────────────────────────────────── */
+.vb-hsteps {
+  display: none;
+  overflow-x: auto; -webkit-overflow-scrolling: touch;
+  gap: 0; padding: 0 16px;
+  background: var(--surface); border-bottom: 1px solid var(--line);
+}
+.vb-hstep {
+  display: flex; flex-direction: column; align-items: center; gap: 4px;
+  padding: 10px 12px; flex-shrink: 0; cursor: pointer; min-width: 64px;
+  border-bottom: 2px solid transparent; transition: border-color .2s ease;
+}
+.vb-hstep-active { border-bottom-color: var(--brand); }
+.vb-hstep-num {
+  width: 22px; height: 22px; border-radius: 50%; font-size: 11px; font-weight: 700;
+  display: flex; align-items: center; justify-content: center;
+  background: var(--ink-50); color: var(--ink-500); border: 1.5px solid var(--line-strong);
+  transition: all .2s ease;
+}
+.vb-hstep-active .vb-hstep-num { background: var(--brand); border-color: var(--brand); color: white; }
+.vb-hstep-done .vb-hstep-num { background: var(--brand-50); border-color: var(--brand); color: var(--brand-deep); }
+.vb-hstep-lbl { font-size: 10px; font-weight: 600; color: var(--ink-500); white-space: nowrap; }
+.vb-hstep-active .vb-hstep-lbl { color: var(--brand-deep); }
+
+/* ── Mobile responsive ─────────────────────────────── */
+@media (max-width: 768px) {
+  .tg-hdr { padding: 10px 16px; gap: 10px; }
+  .tg-product { display: none; }
+  .tg-hdr-help { font-size: 12px; padding: 5px 10px; }
+
+  .vb-body { grid-template-columns: 1fr; }
+  .vb-side { display: none; }
+  .vb-hsteps { display: flex; }
+
+  .vb-stage-wrap { padding: 18px 16px 16px; min-height: auto; justify-content: flex-start; }
+  .vb-card { padding: 20px 20px 16px; border-radius: 16px; }
+  .vb-card-title { font-size: 20px; }
+  .vb-card-sub { font-size: 13px; margin-bottom: 14px; }
+
+  .tg-fields { grid-template-columns: 1fr 1fr; gap: 10px 12px; }
+  .tg-fields-3 { grid-template-columns: 1fr 1fr; }
+  .tg-fields-addr { grid-template-columns: 1fr 1fr; }
+  .tg-fields-owner { grid-template-columns: 1fr 1fr; }
+  .tg-field-full { grid-column: 1/-1; }
+
+  .va-review-grid { grid-template-columns: 1fr; }
+
+  .vb-welcome-content { grid-template-columns: 1fr; padding: 32px 24px; gap: 24px; }
+  .vb-welcome-hero { display: none; }
+  .vb-welcome-h1 { font-size: clamp(28px,8vw,40px); }
+
+  .ftl-nodes { grid-template-columns: 1fr; gap: 16px; }
+  .ftl-connect { display: none; }
+  .ftl-node { flex-direction: row; text-align: left; gap: 16px; padding: 0; }
+  .ftl-cal { margin-bottom: 0; width: 64px; flex-shrink: 0; }
+  .ftl-cal-d { font-size: 26px; padding: 6px 0 8px; }
+
+  .rmw { flex-direction: column; align-items: flex-start; gap: 10px; }
+  .rmw-compare { align-self: stretch; justify-content: center; }
+}
+
+@media (max-width: 420px) {
+  .tg-hdr { padding: 8px 12px; }
+  .tg-hdr-help span { display: none; }
+
+  .vb-card { padding: 16px 14px 14px; }
+  .vb-card-title { font-size: 18px; }
+
+  .tg-fields { grid-template-columns: 1fr; }
+  .tg-fields-3 { grid-template-columns: 1fr; }
+  .tg-fields-addr { grid-template-columns: 1fr; }
+  .tg-fields-owner { grid-template-columns: 1fr; }
+
+  .tg-btn { font-size: 12px; padding: 9px 14px; }
+  .tg-btn-large { padding: 11px 18px; font-size: 13px; }
+
+  .vb-card-foot { flex-wrap: wrap; }
+  .vb-card-foot > span { display: none; }
+  .vb-card-foot .tg-btn { flex: 1; justify-content: center; }
+
+  .tg-success h1 { font-size: 24px; }
+  .tg-success p { font-size: 13px; }
+}
 </style>
 </head>
 <body>
@@ -634,7 +727,11 @@ const PROCESSING_VOLUMES = [
   '< $10k / month','$10k – $50k','$50k – $250k',
   '$250k – $1M','$1M – $5M','$5M+',
 ];
+const GROSS_SALES = [
+  '< $100k','$100k – $500k','$500k – $1M','$1M – $5M','$5M – $10M','$10M+',
+];
 const TICKET_SIZES = ['< $25','$25 – $100','$100 – $500','$500 – $2,500','$2,500+'];
+const WHERE_TO_SEND = ['Business Address','Owner Home Address','Email Only'];
 
 const STAGES = [
   { eyebrow: 'Stage 1', title: 'Business Profile' },
@@ -644,24 +741,30 @@ const STAGES = [
   { eyebrow: 'Stage 5', title: 'Review & Sign' },
 ];
 
-const initialForm = {
+const EMPTY_FORM = {
   legalName:'', dba:'', businessType:'', ein:'', industry:'', website:'',
-  yearsInBusiness:'', address1:'', city:'', state:'', zip:'',
+  yearsInBusiness:'', businessStartDate:'', contactPhone:'',
+  whereToSendStatements:'', billingAddress:'',
+  address1:'', city:'', state:'', zip:'',
   owner1FirstName:'', owner1LastName:'', owner1Title:'',
   owner1Ownership:'', owner1Ssn:'', owner1Dob:'', owner1Email:'',
+  owner1Phone:'', owner1Address:'',
   owner2FirstName:'', owner2LastName:'', owner2Title:'',
   owner2Ownership:'', owner2Ssn:'', owner2Dob:'', owner2Email:'',
+  owner2Phone:'', owner2Address:'',
   hasSecondOwner: false,
-  monthlyVolume:'', avgTicket:'', highestTicket:'', currentProcessor:'',
+  grossYearlySales:'', monthlyVolume:'', avgTicket:'',
+  highestTicket:'', currentProcessor:'',
+  numTrucks:'', numDumpsters:'',
   bankRoutingNumber:'', bankAccountNumber:'', bankName:'', bankAccountType:'',
   consent: false,
 };
 
 function useFormData() {
-  const [data, setData] = useState(initialForm);
+  const [data, setData] = useState(EMPTY_FORM);
   const [stage, setStage] = useState(0);
   const update = useCallback((k, v) => setData(d => ({ ...d, [k]: v })), []);
-  const reset = useCallback(() => { setData(initialForm); setStage(0); }, []);
+  const reset = useCallback(() => { setData(EMPTY_FORM); setStage(0); }, []);
   return { data, update, stage, setStage, reset };
 }
 
@@ -693,7 +796,7 @@ const Stage1 = ({ d, u }) => (
       <Field label="Legal Business Name" required full>
         <input className="tg-inp" placeholder="e.g. Sunbelt Coffee Company, LLC" value={d.legalName} onChange={e=>u('legalName',e.target.value)} />
       </Field>
-      <Field label="Doing Business As">
+      <Field label="Doing Business As (DBA)">
         <input className="tg-inp" placeholder="If different from legal name" value={d.dba} onChange={e=>u('dba',e.target.value)} />
       </Field>
       <Field label="Business Structure" required>
@@ -711,14 +814,19 @@ const Stage1 = ({ d, u }) => (
           {INDUSTRIES.map(i => <option key={i} value={i}>{i}</option>)}
         </select>
       </Field>
-      <Field label="Years in Business">
-        <select className="tg-sel" value={d.yearsInBusiness} onChange={e=>u('yearsInBusiness',e.target.value)}>
+      <Field label="Business Start Date">
+        <input className="tg-inp" type="date" value={d.businessStartDate} onChange={e=>u('businessStartDate',e.target.value)} />
+      </Field>
+      <Field label="Contact Phone">
+        <input className="tg-inp" placeholder="(555) 555-5555" type="tel" value={d.contactPhone} onChange={e=>u('contactPhone',e.target.value)} />
+      </Field>
+      <Field label="Website">
+        <input className="tg-inp" placeholder="https://yourbiz.com" value={d.website} onChange={e=>u('website',e.target.value)} />
+      </Field>
+      <Field label="Where to Send Statements">
+        <select className="tg-sel" value={d.whereToSendStatements} onChange={e=>u('whereToSendStatements',e.target.value)}>
           <option value="">Select…</option>
-          <option>Less than 1 year</option>
-          <option>1–2 years</option>
-          <option>3–5 years</option>
-          <option>6–10 years</option>
-          <option>10+ years</option>
+          {WHERE_TO_SEND.map(v => <option key={v}>{v}</option>)}
         </select>
       </Field>
     </div>
@@ -735,6 +843,12 @@ const Stage1 = ({ d, u }) => (
       </Field>
       <Field label="ZIP" required>
         <input className="tg-inp" placeholder="30301" value={d.zip} onChange={e=>u('zip',e.target.value)} />
+      </Field>
+    </div>
+    <div className="tg-section-divider"><span className="lbl">Billing address</span><span className="line"/></div>
+    <div className="tg-fields">
+      <Field label="Billing Address (if different)" full>
+        <input className="tg-inp" placeholder="Leave blank if same as business address" value={d.billingAddress} onChange={e=>u('billingAddress',e.target.value)} />
       </Field>
     </div>
   </>
@@ -769,6 +883,12 @@ const OwnerFields = ({ d, u, prefix, label, onRemove }) => (
       </Field>
       <Field label="Email">
         <input className="tg-inp" placeholder="jane@business.com" type="email" value={d[`${prefix}Email`]} onChange={e=>u(`${prefix}Email`,e.target.value)} />
+      </Field>
+      <Field label="Phone">
+        <input className="tg-inp" placeholder="(555) 555-5555" type="tel" value={d[`${prefix}Phone`]} onChange={e=>u(`${prefix}Phone`,e.target.value)} />
+      </Field>
+      <Field label="Home Address" full>
+        <input className="tg-inp" placeholder="123 Oak St, City, State ZIP" value={d[`${prefix}Address`]} onChange={e=>u(`${prefix}Address`,e.target.value)} />
       </Field>
     </div>
   </div>
@@ -821,45 +941,81 @@ const RateMatchWidget = () => (
   </div>
 );
 
-const Stage3 = ({ d, u }) => (
-  <>
-    <RateMatchWidget/>
-    <div className="tg-fields tg-fields-3">
-      <Field label="Estimated Monthly Volume" required>
-        <select className="tg-sel" value={d.monthlyVolume} onChange={e=>u('monthlyVolume',e.target.value)}>
-          <option value="">Select…</option>
-          {PROCESSING_VOLUMES.map(v => <option key={v}>{v}</option>)}
-        </select>
-      </Field>
-      <Field label="Average Ticket" required>
-        <select className="tg-sel" value={d.avgTicket} onChange={e=>u('avgTicket',e.target.value)}>
-          <option value="">Select…</option>
-          {TICKET_SIZES.map(v => <option key={v}>{v}</option>)}
-        </select>
-      </Field>
-      <Field label="Highest Single Ticket">
-        <input className="tg-inp" placeholder="e.g. $4,200" value={d.highestTicket} onChange={e=>u('highestTicket',e.target.value)} />
-      </Field>
-    </div>
-    <div className="tg-rate-card tg-rate-card-slim">
-      <Field label="Current Processor (Optional)" full>
-        <input className="tg-inp" placeholder="e.g. Square, Stripe, Toast — leave blank if none" value={d.currentProcessor||''} onChange={e=>u('currentProcessor',e.target.value)} />
-      </Field>
-      <label className="tg-rate-card-upload">
-        <input type="file" hidden/>
-        <span className="tg-rate-card-upload-icon">
-          <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-            <path d="M8 12V3M4.5 6.5L8 3l3.5 3.5M2.5 13h11"/>
-          </svg>
-        </span>
-        <span>
-          <strong>Upload last month's statement</strong>
-          <em>PDF or image · we'll beat the effective rate</em>
-        </span>
-      </label>
-    </div>
-  </>
-);
+const Stage3 = ({ d, u, uploadedFile, setUploadedFile }) => {
+  const fileRef = useRef();
+
+  const handleFile = (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    if (file.size > 7 * 1024 * 1024) {
+      alert('File is too large. Please upload a file smaller than 7 MB.');
+      return;
+    }
+    const reader = new FileReader();
+    reader.onload = (ev) => {
+      const base64 = ev.target.result.split(',')[1];
+      setUploadedFile({ name: file.name, type: file.type, data: base64 });
+    };
+    reader.readAsDataURL(file);
+  };
+
+  return (
+    <>
+      <RateMatchWidget/>
+      <div className="tg-fields tg-fields-3">
+        <Field label="Gross Yearly Sales">
+          <select className="tg-sel" value={d.grossYearlySales} onChange={e=>u('grossYearlySales',e.target.value)}>
+            <option value="">Select…</option>
+            {GROSS_SALES.map(v => <option key={v}>{v}</option>)}
+          </select>
+        </Field>
+        <Field label="Estimated Monthly Volume" required>
+          <select className="tg-sel" value={d.monthlyVolume} onChange={e=>u('monthlyVolume',e.target.value)}>
+            <option value="">Select…</option>
+            {PROCESSING_VOLUMES.map(v => <option key={v}>{v}</option>)}
+          </select>
+        </Field>
+        <Field label="Average Ticket" required>
+          <select className="tg-sel" value={d.avgTicket} onChange={e=>u('avgTicket',e.target.value)}>
+            <option value="">Select…</option>
+            {TICKET_SIZES.map(v => <option key={v}>{v}</option>)}
+          </select>
+        </Field>
+        <Field label="Highest Single Ticket">
+          <input className="tg-inp" placeholder="e.g. $4,200" value={d.highestTicket} onChange={e=>u('highestTicket',e.target.value)} />
+        </Field>
+        <Field label="Number of Trucks">
+          <input className="tg-inp" placeholder="0" type="number" min="0" value={d.numTrucks} onChange={e=>u('numTrucks',e.target.value)} />
+        </Field>
+        <Field label="Number of Dumpsters">
+          <input className="tg-inp" placeholder="0" type="number" min="0" value={d.numDumpsters} onChange={e=>u('numDumpsters',e.target.value)} />
+        </Field>
+      </div>
+      <div className="tg-rate-card tg-rate-card-slim">
+        <Field label="Current Processor (Optional)" full>
+          <input className="tg-inp" placeholder="e.g. Square, Stripe, Toast — leave blank if none" value={d.currentProcessor||''} onChange={e=>u('currentProcessor',e.target.value)} />
+        </Field>
+        <label className="tg-rate-card-upload" onClick={() => fileRef.current.click()}>
+          <input ref={fileRef} type="file" accept=".pdf,.png,.jpg,.jpeg" hidden onChange={handleFile}/>
+          <span className="tg-rate-card-upload-icon">
+            <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M8 12V3M4.5 6.5L8 3l3.5 3.5M2.5 13h11"/>
+            </svg>
+          </span>
+          <span>
+            <strong>Upload last month's statement</strong>
+            <em>PDF or image · max 7 MB · we'll beat the effective rate</em>
+          </span>
+        </label>
+        {uploadedFile && (
+          <div className="tg-file-chosen">
+            ✓ {uploadedFile.name}
+          </div>
+        )}
+      </div>
+    </>
+  );
+};
 
 // ─── Stage 4: Banking ────────────────────────────────────────
 const Stage4 = ({ d, u }) => (
@@ -920,7 +1076,11 @@ const Stage5 = ({ d, u, setStage }) => {
           <ReviewRow label="Structure" value={businessTypeLabel} />
           <ReviewRow label="EIN" value={d.ein} />
           <ReviewRow label="Industry" value={d.industry} />
+          <ReviewRow label="Start Date" value={d.businessStartDate} />
+          <ReviewRow label="Phone" value={d.contactPhone} />
           <ReviewRow label="Address" value={d.address1 ? `${d.address1}, ${d.city}, ${d.state} ${d.zip}` : ''} />
+          <ReviewRow label="Billing Addr." value={d.billingAddress} />
+          <ReviewRow label="Statements to" value={d.whereToSendStatements} />
         </div>
         <div className="va-review-card">
           <div className="va-review-head">
@@ -930,9 +1090,13 @@ const Stage5 = ({ d, u, setStage }) => {
           <ReviewRow label="Primary" value={[d.owner1FirstName, d.owner1LastName].filter(Boolean).join(' ')} />
           <ReviewRow label="Title" value={d.owner1Title} />
           <ReviewRow label="Ownership" value={d.owner1Ownership ? `${d.owner1Ownership}%` : ''} />
+          <ReviewRow label="Phone" value={d.owner1Phone} />
+          <ReviewRow label="Address" value={d.owner1Address} />
           {d.hasSecondOwner && <>
             <ReviewRow label="Additional" value={[d.owner2FirstName, d.owner2LastName].filter(Boolean).join(' ')} />
             <ReviewRow label="Ownership" value={d.owner2Ownership ? `${d.owner2Ownership}%` : ''} />
+            <ReviewRow label="Phone" value={d.owner2Phone} />
+            <ReviewRow label="Address" value={d.owner2Address} />
           </>}
         </div>
         <div className="va-review-card">
@@ -940,9 +1104,12 @@ const Stage5 = ({ d, u, setStage }) => {
             <p className="va-review-title">Processing</p>
             <button className="va-review-edit" onClick={() => setStage(3)}>Edit</button>
           </div>
-          <ReviewRow label="Volume" value={d.monthlyVolume} />
+          <ReviewRow label="Yearly Sales" value={d.grossYearlySales} />
+          <ReviewRow label="Monthly Vol." value={d.monthlyVolume} />
           <ReviewRow label="Avg ticket" value={d.avgTicket} />
           <ReviewRow label="High ticket" value={d.highestTicket} />
+          <ReviewRow label="# Trucks" value={d.numTrucks} />
+          <ReviewRow label="# Dumpsters" value={d.numDumpsters} />
           <ReviewRow label="Current proc." value={d.currentProcessor || '— none'} />
         </div>
         <div className="va-review-card">
@@ -971,22 +1138,6 @@ const Stage5 = ({ d, u, setStage }) => {
   );
 };
 
-const StageComponents = { 1: Stage1, 2: Stage2, 3: Stage3, 4: Stage4, 5: Stage5 };
-
-function stageQuestion(stage) {
-  return ['','Tell Us About Your Business','Who Owns 25% or More?',"What's Your Processing Volume?",'Where Should Funds Settle?','One Last Look Before You Submit'][stage] || '';
-}
-function stageDescription(stage) {
-  return [
-    '',
-    "The basics about your business. Enter this once and we'll carry it through the rest of your application.",
-    "Anyone with 25% or more ownership needs to be listed. We're required to verify their identity.",
-    "Estimate your monthly volume — we'll match or beat your current rate before you finish.",
-    "Where should funds settle? Standard funding lands by 8am ET the next business day.",
-    "Quick scan to make sure everything's right, then sign and submit.",
-  ][stage] || '';
-}
-
 // ─── Header ──────────────────────────────────────────────────
 const Header = () => (
   <div className="tg-hdr">
@@ -1003,7 +1154,7 @@ const Header = () => (
       <svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
         <path d="M3 2.5h2.5l1 3-1.5 1.2a8.5 8.5 0 0 0 4.3 4.3l1.2-1.5 3 1V13a1.5 1.5 0 0 1-1.5 1.5C6.6 14.5 1.5 9.4 1.5 4A1.5 1.5 0 0 1 3 2.5z"/>
       </svg>
-      Help · (407) 226-1151
+      <span>Help · (407) 226-1151</span>
     </a>
   </div>
 );
@@ -1296,8 +1447,8 @@ const SuccessScreen = ({ onRestart }) => {
       <div className="tg-success-mark">
         <PawApprovedMark/>
       </div>
-      <h1>Application Submitted 🎉</h1>
-      <p>Reference <strong>TGR-08471-A</strong> · We'll email you within 3 business days with your underwriting decision.</p>
+      <h1>Application Submitted!</h1>
+      <p>We'll email you within 3 business days with your underwriting decision.</p>
       <FundingTimeline/>
       <button className="tg-restart" onClick={onRestart}>Start a new application</button>
     </div>
@@ -1307,7 +1458,37 @@ const SuccessScreen = ({ onRestart }) => {
 // ─── Main Application ────────────────────────────────────────
 const App = () => {
   const { data, update, stage, setStage, reset } = useFormData();
+  const [uploadedFile, setUploadedFile] = useState(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState('');
   const completion = stageCompletion(data);
+
+  const handleSubmit = async () => {
+    if (!data.consent) return;
+    setIsSubmitting(true);
+    setSubmitError('');
+    try {
+      const payload = {
+        ...data,
+        files: uploadedFile ? [uploadedFile] : [],
+      };
+      const res = await fetch('/api/submit', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
+      const json = await res.json();
+      if (!res.ok || json.success === false) {
+        setSubmitError(json.error || 'Submission failed. Please try again or call (407) 226-1151.');
+        setIsSubmitting(false);
+        return;
+      }
+      setStage(6);
+    } catch (err) {
+      setSubmitError('Network error — please check your connection and try again.');
+      setIsSubmitting(false);
+    }
+  };
 
   if (stage === 0) {
     return (
@@ -1322,17 +1503,42 @@ const App = () => {
     return (
       <div className="app">
         <Header/>
-        <SuccessScreen onRestart={reset}/>
+        <SuccessScreen onRestart={() => { reset(); setUploadedFile(null); }}/>
       </div>
     );
   }
 
   const stageIdx = stage - 1;
-  const Body = StageComponents[stage];
+
+  const renderStageBody = () => {
+    if (stage === 1) return <Stage1 d={data} u={update}/>;
+    if (stage === 2) return <Stage2 d={data} u={update}/>;
+    if (stage === 3) return <Stage3 d={data} u={update} uploadedFile={uploadedFile} setUploadedFile={setUploadedFile}/>;
+    if (stage === 4) return <Stage4 d={data} u={update}/>;
+    if (stage === 5) return <Stage5 d={data} u={update} setStage={setStage}/>;
+  };
 
   return (
     <div className="app">
       <Header/>
+      {/* Mobile horizontal stepper */}
+      <div className="vb-hsteps">
+        {STAGES.map((s, i) => {
+          const idx = i + 1;
+          const isActive = idx === stage;
+          const isDone = completion[i] >= 0.95 && !isActive;
+          return (
+            <button
+              key={i}
+              className={`vb-hstep${isActive ? ' vb-hstep-active' : ''}${isDone ? ' vb-hstep-done' : ''}`}
+              onClick={() => setStage(idx)}
+            >
+              <span className="vb-hstep-num">{isDone ? '✓' : idx}</span>
+              <span className="vb-hstep-lbl">{s.title}</span>
+            </button>
+          );
+        })}
+      </div>
       <div className="vb-body">
         {/* Side rail */}
         <aside className="vb-side">
@@ -1379,12 +1585,14 @@ const App = () => {
             <h2 className="vb-card-title">{stageQuestion(stage)}</h2>
             <p className="vb-card-sub">{stageDescription(stage)}</p>
             <div className="vb-card-body">
-              <Body d={data} u={update} setStage={setStage}/>
+              {renderStageBody()}
             </div>
+            {submitError && <div className="tg-error-banner">{submitError}</div>}
             <div className="vb-card-foot">
               <button
                 className="tg-btn tg-btn-ghost"
                 onClick={() => setStage(stage === 1 ? 0 : stage - 1)}
+                disabled={isSubmitting}
               >← Back</button>
               <span/>
               {stage < 5 ? (
@@ -1394,10 +1602,10 @@ const App = () => {
               ) : (
                 <button
                   className="tg-btn tg-btn-primary"
-                  disabled={!data.consent}
-                  onClick={() => setStage(6)}
+                  disabled={!data.consent || isSubmitting}
+                  onClick={handleSubmit}
                 >
-                  Submit application
+                  {isSubmitting ? 'Submitting…' : 'Submit application'}
                 </button>
               )}
             </div>
@@ -1407,6 +1615,20 @@ const App = () => {
     </div>
   );
 };
+
+function stageQuestion(stage) {
+  return ['','Tell Us About Your Business','Who Owns 25% or More?',"What's Your Processing Volume?",'Where Should Funds Settle?','One Last Look Before You Submit'][stage] || '';
+}
+function stageDescription(stage) {
+  return [
+    '',
+    "The basics about your business. Enter this once and we'll carry it through the rest of your application.",
+    "Anyone with 25% or more ownership needs to be listed. We're required to verify their identity.",
+    "Estimate your monthly volume — we'll match or beat your current rate before you finish.",
+    "Where should funds settle? Standard funding lands by 8am ET the next business day.",
+    "Quick scan to make sure everything's right, then sign and submit.",
+  ][stage] || '';
+}
 
 ReactDOM.createRoot(document.getElementById('root')).render(<App/>);
 </script>
