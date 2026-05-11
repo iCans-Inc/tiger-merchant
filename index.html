@@ -1,0 +1,1414 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Tiger Merchant Application</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root {
+  --brand: #3FB94C;
+  --brand-deep: #2E9039;
+  --brand-50: #ECFAEE;
+  --brand-100: #D6F3DA;
+  --ink: #494A7D;
+  --ink-700: #5E5F94;
+  --ink-500: #6E6A93;
+  --ink-300: #B5B2C9;
+  --ink-100: #E8E7EE;
+  --ink-50: #F4F3F8;
+  --bg: #FBFAF9;
+  --surface: #FFFFFF;
+  --line: rgba(73,74,125,0.10);
+  --line-strong: rgba(73,74,125,0.18);
+  --text: #1A1830;
+  --text-muted: #6E6A93;
+  --danger: #C9352B;
+  --tiger: #F47A1F;
+  --tiger-deep: #C75A0E;
+  --shadow-sm: 0 1px 2px rgba(15,23,42,0.04);
+  --shadow: 0 1px 2px rgba(15,23,42,0.04),0 8px 24px -8px rgba(15,23,42,0.10);
+  --shadow-lg: 0 18px 50px -16px rgba(73,74,125,0.30);
+}
+
+*{box-sizing:border-box;}
+html,body{margin:0;min-height:100vh;font-family:'Inter',-apple-system,BlinkMacSystemFont,sans-serif;color:var(--text);-webkit-font-smoothing:antialiased;background:var(--bg);}
+button{font-family:inherit;cursor:pointer;border:none;background:none;padding:0;color:inherit;}
+a{color:inherit;text-decoration:none;}
+
+/* ── App shell ─────────────────────────────────────── */
+.app {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+/* ── Header ────────────────────────────────────────── */
+.tg-hdr {
+  flex-shrink: 0;
+  display: flex; align-items: center; gap: 16px;
+  padding: 12px 28px;
+  background: rgba(251,250,249,0.92);
+  backdrop-filter: blur(14px);
+  border-bottom: 1px solid var(--line);
+  position: sticky; top: 0; z-index: 100;
+}
+.tg-logo { display: flex; align-items: center; gap: 10px; }
+.tg-logo-img { height: 34px; width: auto; display: block; }
+.tg-logo-mark {
+  width: 30px; height: 30px;
+  border-radius: 8px;
+  background: linear-gradient(135deg, var(--tiger) 0%, var(--tiger-deep) 100%);
+  display: flex; align-items: center; justify-content: center;
+  color: white; font-weight: 700; font-size: 15px;
+  letter-spacing: -0.02em;
+}
+.tg-divider { width: 1px; height: 16px; background: var(--line-strong); }
+.tg-product {
+  font-size: 12px; font-weight: 600;
+  color: var(--ink-700);
+  background: var(--ink-50);
+  padding: 3px 9px;
+  border-radius: 999px;
+}
+.tg-hdr-spacer { flex: 1; }
+.tg-hdr-help {
+  display: inline-flex; align-items: center; gap: 6px;
+  color: var(--ink-700); font-size: 13px; font-weight: 600;
+  padding: 6px 12px; border-radius: 999px;
+  border: 1px solid var(--line-strong);
+  white-space: nowrap;
+}
+.tg-hdr-help:hover { border-color: var(--ink); color: var(--ink); }
+
+/* ── Buttons ───────────────────────────────────────── */
+.tg-btn {
+  display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+  font-size: 13px; font-weight: 600;
+  padding: 10px 18px; border-radius: 999px;
+  transition: all .15s ease; border: 1px solid transparent;
+  white-space: nowrap;
+}
+.tg-btn-primary { background: var(--brand); color: white; }
+.tg-btn-primary:hover { background: var(--brand-deep); transform: translateY(-1px); box-shadow: 0 6px 18px rgba(63,185,76,0.32); }
+.tg-btn-primary:disabled { opacity: 0.4; cursor: not-allowed; transform: none; box-shadow: none; }
+.tg-btn-ghost { background: var(--surface); color: var(--ink-700); border-color: var(--line-strong); }
+.tg-btn-ghost:hover { border-color: var(--ink); color: var(--ink); }
+.tg-btn-ghost:disabled { opacity: 0.4; cursor: not-allowed; }
+.tg-btn-large { padding: 13px 22px; font-size: 14px; }
+
+/* ── Form fields ───────────────────────────────────── */
+.tg-inp,.tg-sel {
+  width: 100%; font-family: inherit; font-size: 14px;
+  color: var(--text); background: var(--surface);
+  border: 1px solid var(--line-strong);
+  padding: 10px 13px; border-radius: 10px;
+  transition: border-color .15s ease,box-shadow .15s ease; outline: none;
+}
+.tg-inp::placeholder { color: var(--ink-300); }
+.tg-inp:hover,.tg-sel:hover { border-color: var(--ink-300); }
+.tg-inp:focus,.tg-sel:focus { border-color: var(--brand); box-shadow: 0 0 0 4px rgba(63,185,76,0.15); }
+.tg-sel {
+  appearance: none;
+  background: var(--surface) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%236E6A93' stroke-width='1.6' fill='none' stroke-linecap='round'/%3E%3C/svg%3E") no-repeat right 12px center;
+  padding-right: 32px; cursor: pointer;
+}
+.tg-lbl {
+  display: flex; align-items: center; gap: 6px;
+  font-size: 12px; font-weight: 600;
+  color: var(--ink); margin-bottom: 5px;
+}
+.tg-lbl .req { color: var(--brand-deep); }
+.tg-field { display: flex; flex-direction: column; min-width: 0; }
+.tg-fields { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 14px 16px; }
+.tg-fields-3 { grid-template-columns: repeat(3,minmax(0,1fr)); }
+.tg-field-full { grid-column: 1/-1; }
+.tg-fields-addr { grid-template-columns: 1fr 140px 60px 80px; gap: 12px 14px; }
+.tg-fields-owner { grid-template-columns: repeat(4,minmax(0,1fr)); gap: 12px 14px; }
+.tg-section-divider {
+  display: flex; align-items: center; gap: 10px;
+  margin: 4px 0 8px;
+}
+.tg-section-divider .lbl {
+  font-size: 11px; font-weight: 700;
+  color: var(--ink-700); text-transform: uppercase;
+  letter-spacing: 0.08em; white-space: nowrap;
+}
+.tg-section-divider .line { flex: 1; height: 1px; background: var(--line-strong); }
+
+/* Owner block */
+.tg-owner-block { display: flex; flex-direction: column; gap: 8px; }
+.tg-owner-remove {
+  font-size: 11px; font-weight: 600; color: var(--danger);
+  padding: 3px 9px; border-radius: 999px;
+  border: 1px solid rgba(201,53,43,0.25);
+  white-space: nowrap;
+}
+.tg-owner-remove:hover { background: rgba(201,53,43,0.06); }
+.tg-owner2-toggle {
+  display: inline-flex; align-items: center; gap: 8px;
+  font-size: 13px; font-weight: 600; color: var(--ink-700);
+  border: 1.5px dashed var(--line-strong);
+  padding: 10px 16px; border-radius: 10px;
+  background: transparent; align-self: flex-start;
+  transition: all .15s ease; margin-top: 4px;
+}
+.tg-owner2-toggle:hover { border-color: var(--brand); color: var(--brand-deep); }
+.tg-owner2-toggle .plus {
+  width: 20px; height: 20px; border-radius: 50%;
+  background: var(--brand-50); color: var(--brand-deep);
+  font-size: 15px; display: flex; align-items: center; justify-content: center;
+  font-weight: 700;
+}
+
+/* Rate card (stage 3) */
+.tg-rate-card { background: var(--ink-50); border: 1px solid var(--line); border-radius: 12px; padding: 16px; }
+.tg-rate-card-slim { padding: 14px 16px; }
+.tg-rate-card-upload {
+  display: flex; align-items: center; gap: 12px;
+  background: var(--surface); border: 1.5px dashed var(--line-strong);
+  padding: 11px 14px; border-radius: 10px; cursor: pointer;
+  transition: border-color .15s ease; margin-top: 10px;
+}
+.tg-rate-card-upload:hover { border-color: var(--brand); }
+.tg-rate-card-upload-icon {
+  width: 28px; height: 28px; border-radius: 8px;
+  background: var(--brand-50); color: var(--brand-deep);
+  display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+}
+.tg-rate-card-upload strong { display: block; font-size: 13px; font-weight: 600; color: var(--ink); }
+.tg-rate-card-upload em { display: block; font-size: 11px; color: var(--text-muted); font-style: normal; margin-top: 1px; }
+
+/* Bank trust notice */
+.tg-bank-trust {
+  display: flex; align-items: flex-start; gap: 12px;
+  background: var(--brand-50); border: 1px solid var(--brand-100);
+  border-radius: 12px; padding: 14px 16px; margin-top: 6px;
+}
+.tg-bank-trust-icon {
+  flex-shrink: 0; width: 32px; height: 32px; border-radius: 8px;
+  background: var(--brand); color: white;
+  display: flex; align-items: center; justify-content: center;
+  margin-top: 1px;
+}
+.tg-bank-trust-body { font-size: 12.5px; line-height: 1.45; color: var(--ink); }
+.tg-bank-trust-body strong { color: var(--brand-deep); }
+
+/* ── Review (stage 5) ──────────────────────────────── */
+.va-review-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.va-review-card {
+  background: var(--ink-50); border: 1px solid var(--line);
+  border-radius: 12px; padding: 14px 16px;
+}
+.va-review-head {
+  display: flex; align-items: center; justify-content: space-between; gap: 10px;
+  margin-bottom: 8px; padding-bottom: 8px;
+  border-bottom: 1px dashed var(--line-strong);
+}
+.va-review-title {
+  font-size: 11px; font-weight: 700; color: var(--ink);
+  text-transform: uppercase; letter-spacing: 0.06em; margin: 0;
+}
+.va-review-edit {
+  font-size: 11px; font-weight: 600; color: var(--brand-deep);
+  padding: 3px 9px; border-radius: 999px;
+  background: var(--brand-50); border: 1px solid var(--brand-100);
+}
+.va-review-edit:hover { background: var(--brand-100); }
+.va-review-row {
+  display: grid; grid-template-columns: 100px 1fr;
+  gap: 8px; padding: 5px 0; font-size: 12px;
+}
+.va-review-row+.va-review-row { border-top: 1px solid var(--line); }
+.va-review-row .lbl { color: var(--text-muted); font-weight: 500; }
+.va-review-row .val { color: var(--ink); font-weight: 600; word-break: break-word; }
+.va-review-row .empty { color: var(--ink-300); font-style: italic; font-weight: 500; }
+.va-consent {
+  background: var(--brand-50); border: 1px solid var(--brand-100);
+  border-radius: 12px; padding: 14px 16px; margin-top: 12px;
+  display: flex; align-items: flex-start; gap: 10px;
+  font-size: 13px; line-height: 1.45; color: var(--ink); cursor: pointer;
+}
+.va-consent input { display: none; }
+.va-consent-box {
+  flex-shrink: 0; width: 18px; height: 18px; border-radius: 5px;
+  border: 1.5px solid var(--ink-300); background: var(--surface);
+  display: flex; align-items: center; justify-content: center;
+  margin-top: 1px; transition: all .15s ease;
+}
+.va-consent input:checked~.va-consent-box { background: var(--brand); border-color: var(--brand); color: white; }
+.va-consent-box svg { opacity: 0; transition: opacity .15s ease; color: white; }
+.va-consent input:checked~.va-consent-box svg { opacity: 1; }
+
+/* ── Variation B layout ────────────────────────────── */
+.vb-body {
+  flex: 1;
+  display: grid;
+  grid-template-columns: 250px minmax(0,1fr);
+}
+
+/* Side rail */
+.vb-side {
+  background: var(--surface);
+  border-right: 1px solid var(--line);
+  padding: 28px 22px;
+  display: flex; flex-direction: column; gap: 18px;
+  min-height: calc(100vh - 60px);
+}
+.vb-side-eyebrow {
+  font-size: 10px; font-weight: 700; color: var(--brand-deep);
+  text-transform: uppercase; letter-spacing: 0.12em;
+}
+.vb-side-title {
+  font-size: 18px; font-weight: 700; letter-spacing: -0.02em;
+  color: var(--ink); margin: 0; line-height: 1.15;
+}
+.vb-vsteps { display: flex; flex-direction: column; position: relative; }
+.vb-vsteps::before {
+  content: ''; position: absolute; left: 13px; top: 14px; bottom: 14px;
+  width: 2px; background: var(--line-strong); z-index: 0;
+}
+.vb-vstep {
+  display: flex; align-items: flex-start; gap: 12px;
+  padding: 10px 0; position: relative; z-index: 1;
+  text-align: left; cursor: pointer; transition: opacity .2s ease;
+}
+.vb-vstep-num {
+  flex-shrink: 0; width: 28px; height: 28px; border-radius: 50%;
+  background: var(--surface); border: 2px solid var(--line-strong);
+  font-size: 12px; font-weight: 700; color: var(--ink-500);
+  display: flex; align-items: center; justify-content: center;
+  transition: all .2s ease;
+}
+.vb-vstep-active .vb-vstep-num { background: var(--brand); border-color: var(--brand); color: white; box-shadow: 0 0 0 4px rgba(63,185,76,0.18); }
+.vb-vstep-done .vb-vstep-num { background: var(--brand-50); border-color: var(--brand); color: var(--brand-deep); }
+.vb-vstep-body { display: flex; flex-direction: column; padding-top: 3px; min-width: 0; }
+.vb-vstep-eyebrow { font-size: 9.5px; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.1em; }
+.vb-vstep-active .vb-vstep-eyebrow { color: var(--brand-deep); }
+.vb-vstep-title { font-size: 13.5px; font-weight: 600; color: var(--ink-500); margin-top: 2px; letter-spacing: -0.01em; }
+.vb-vstep-active .vb-vstep-title,.vb-vstep-done .vb-vstep-title { color: var(--ink); }
+.vb-side-foot { margin-top: auto; padding-top: 16px; border-top: 1px solid var(--line); }
+.vb-side-helper {
+  background: var(--ink-50); border-radius: 12px; padding: 12px 14px;
+  font-size: 12px; color: var(--text-muted); line-height: 1.45;
+}
+.vb-side-helper strong { color: var(--ink); display: block; margin-bottom: 3px; font-size: 12.5px; }
+.vb-side-helper a { color: var(--brand-deep); font-weight: 600; }
+
+/* Centered card stage */
+.vb-stage-wrap {
+  padding: 28px 36px 22px;
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  min-height: calc(100vh - 60px);
+  background:
+    radial-gradient(ellipse 70% 60% at 50% 35%,rgba(63,185,76,0.10) 0%,transparent 60%),
+    var(--bg);
+}
+.vb-card {
+  background: var(--surface); border: 1px solid var(--line);
+  border-radius: 22px; box-shadow: var(--shadow-lg);
+  padding: 30px 38px 22px; width: 100%; max-width: 820px;
+  display: flex; flex-direction: column;
+}
+.vb-card-meta {
+  display: flex; align-items: center; justify-content: space-between;
+  font-size: 11px; font-weight: 700; color: var(--text-muted);
+  margin-bottom: 12px; text-transform: uppercase; letter-spacing: 0.1em;
+}
+.vb-card-meta-stage {
+  display: inline-flex; align-items: center; gap: 7px; color: var(--brand-deep);
+}
+.vb-card-meta-stage::before {
+  content: ''; width: 6px; height: 6px; border-radius: 50%;
+  background: var(--brand); box-shadow: 0 0 0 3px var(--brand-50);
+}
+.vb-card-title {
+  font-size: 26px; font-weight: 700; letter-spacing: -0.025em;
+  line-height: 1.1; color: var(--ink); margin: 0 0 6px;
+}
+.vb-card-sub {
+  font-size: 13.5px; line-height: 1.5; color: var(--text-muted); margin: 0 0 18px;
+}
+.vb-card-body { display: flex; flex-direction: column; gap: 14px; }
+.vb-card-foot {
+  display: flex; align-items: center; justify-content: space-between;
+  margin-top: 18px; padding-top: 16px;
+  border-top: 1px dashed var(--line-strong); gap: 12px;
+}
+
+/* ── Welcome screen ────────────────────────────────── */
+.vb-welcome-wrap {
+  flex: 1;
+  display: flex; align-items: stretch;
+  background: linear-gradient(135deg,#FBFAF9 0%,#ECFAEE 100%);
+  position: relative; overflow: hidden;
+  min-height: calc(100vh - 60px);
+}
+.vb-welcome-bg {
+  position: absolute; inset: 0; pointer-events: none; opacity: 0.5;
+}
+.vb-welcome-bg svg { width: 100%; height: 100%; }
+.vb-welcome-content {
+  position: relative; display: grid;
+  grid-template-columns: minmax(0,1fr) minmax(0,0.85fr);
+  gap: 30px; flex: 1; padding: 50px 60px; align-items: center;
+}
+.vb-welcome-left { display: flex; flex-direction: column; gap: 14px; max-width: 540px; }
+.vb-welcome-h1 {
+  font-size: clamp(36px,4vw,50px); font-weight: 700;
+  letter-spacing: -0.04em; line-height: 0.98; color: var(--ink); margin: 0;
+}
+.vb-welcome-h1 em { font-style: italic; font-weight: 500; color: var(--brand-deep); }
+.vb-welcome-lede { font-size: 16px; line-height: 1.55; color: var(--text-muted); margin: 0; }
+.vb-pricing { display: flex; flex-direction: column; gap: 8px; }
+.vb-pricing-row {
+  display: flex; align-items: center; gap: 12px;
+  padding: 11px 16px; background: var(--surface);
+  border: 1px solid var(--line); border-radius: 12px;
+}
+.vb-pricing-tick {
+  flex-shrink: 0; width: 20px; height: 20px; border-radius: 50%;
+  background: var(--brand); color: white;
+  display: flex; align-items: center; justify-content: center;
+}
+.vb-pricing-body { display: flex; flex-direction: column; }
+.vb-pricing-headline { font-size: 14px; font-weight: 600; color: var(--ink); }
+.vb-pricing-headline strong { color: var(--brand-deep); }
+.vb-pricing-sub { font-size: 11px; color: var(--text-muted); margin-top: 1px; }
+.vb-rate-match {
+  display: flex; align-items: flex-start; gap: 12px;
+  background: linear-gradient(135deg,#FFF8EE 0%,#ECFAEE 100%);
+  border: 1px solid rgba(63,185,76,0.25);
+  border-radius: 12px; padding: 13px 16px;
+}
+.vb-rate-match-badge {
+  flex-shrink: 0; width: 30px; height: 30px; border-radius: 8px;
+  background: var(--tiger); color: white;
+  display: flex; align-items: center; justify-content: center; margin-top: 1px;
+}
+.vb-rate-match-body { font-size: 12.5px; line-height: 1.45; color: var(--ink); }
+.vb-rate-match-body strong { color: var(--brand-deep); }
+.vb-rate-match-body em { font-style: normal; color: var(--brand-deep); font-weight: 600; }
+.vb-welcome-cta-row { display: flex; align-items: center; gap: 12px; margin-top: 4px; }
+.vb-welcome-helpline {
+  display: flex; align-items: center; gap: 7px;
+  font-size: 12.5px; color: var(--text-muted);
+}
+.vb-welcome-helpline a { color: var(--brand-deep); }
+.vb-welcome-hero {
+  background: var(--surface); border: 1px solid var(--line);
+  border-radius: 20px; padding: 22px 24px;
+  box-shadow: var(--shadow-lg);
+}
+
+/* ── Payments Hero ─────────────────────────────────── */
+.ph { position: relative; width: 100%; overflow: hidden; border-radius: 12px; }
+.ph-bg { position: absolute; inset: 0; pointer-events: none; }
+.ph-bg svg { width: 100%; height: 100%; }
+.ph-stage { position: relative; width: 100%; }
+.ph-stage-svg { width: 100%; height: auto; display: block; }
+.ph-card {
+  position: absolute; left: 6%; top: 40%;
+  width: 130px; height: 80px;
+  animation: ph-swipe 2.6s ease-in-out infinite;
+}
+@keyframes ph-swipe {
+  0%{transform:translateX(-80px) translateY(-50%) rotate(-8deg);opacity:0}
+  15%{opacity:1}
+  35%{transform:translateX(160px) translateY(-50%) rotate(-2deg);opacity:1}
+  50%,100%{transform:translateX(160px) translateY(-50%) rotate(-2deg);opacity:0}
+}
+.ph-card-face {
+  width: 100%; height: 100%; border-radius: 9px;
+  background: linear-gradient(135deg,#494A7D 0%,#2C2A52 100%);
+  box-shadow: 0 8px 24px -6px rgba(73,74,125,0.55);
+  position: relative; overflow: hidden;
+  display: flex; flex-direction: column; justify-content: space-between;
+  padding: 8px 10px;
+}
+.ph-card-shine {
+  position: absolute; inset: 0;
+  background: linear-gradient(120deg,transparent 20%,rgba(255,255,255,0.12) 50%,transparent 80%);
+}
+.ph-card-chip { width: 24px; height: 18px; }
+.ph-card-wave { width: 18px; height: 18px; position: absolute; top: 10px; right: 10px; }
+.ph-card-num { font-size: 9px; font-weight: 600; color: rgba(255,255,255,0.7); letter-spacing: 0.08em; }
+.ph-card-brand { font-size: 9px; font-weight: 800; color: rgba(255,255,255,0.9); letter-spacing: 0.04em; align-self: flex-end; }
+.ph-approval {
+  position: absolute; right: 24%; top: 20%;
+  display: flex; align-items: center; gap: 8px;
+  background: white; border-radius: 10px;
+  padding: 8px 12px;
+  box-shadow: 0 8px 24px -6px rgba(63,185,76,0.4);
+  animation: ph-pop 2.6s ease-in-out infinite;
+}
+@keyframes ph-pop {
+  0%,40%{opacity:0;transform:translateY(10px) scale(0.85)}
+  55%{opacity:1;transform:translateY(-2px) scale(1.04)}
+  65%,85%{opacity:1;transform:translateY(0) scale(1)}
+  100%{opacity:0;transform:translateY(-8px) scale(0.9)}
+}
+.ph-approval-icon {
+  width: 20px; height: 20px; border-radius: 50%;
+  background: var(--brand); color: white;
+  display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+}
+.ph-approval-amt { font-size: 13px; font-weight: 700; color: var(--ink); }
+.ph-approval-lbl { font-size: 10px; color: var(--text-muted); }
+.ph-tile {
+  position: absolute;
+  display: flex; align-items: center; gap: 8px;
+  background: white; border: 1px solid var(--line);
+  border-radius: 10px; padding: 8px 12px;
+  box-shadow: var(--shadow-sm); font-size: 12px;
+}
+.ph-tile-1 { top: 8%; right: 3%; animation: ph-float 3s ease-in-out infinite; }
+.ph-tile-2 { bottom: 10%; left: 4%; animation: ph-float 3s ease-in-out infinite 0.8s; }
+.ph-tile-3 { top: 55%; right: 5%; animation: ph-float 3s ease-in-out infinite 1.4s; }
+@keyframes ph-float {
+  0%,100%{transform:translateY(0)} 50%{transform:translateY(-5px)}
+}
+.ph-tile-icon {
+  width: 22px; height: 22px; border-radius: 6px;
+  background: var(--brand-50); color: var(--brand-deep);
+  display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+}
+.ph-tile-icon-light { background: var(--brand-50); color: var(--brand-deep); }
+.ph-tile-icon-ink { background: var(--ink-50); color: var(--ink); }
+.ph-tile-amount { font-size: 13px; font-weight: 700; color: var(--brand-deep); }
+.ph-tile-amount-deep { color: var(--ink); }
+.ph-tile-amount-ink { color: var(--ink-700); }
+.ph-tile-meta { font-size: 10px; color: var(--text-muted); }
+.ph-screen { transition: opacity 0.3s; }
+.ph-terminal-svg { cursor: default; }
+.ph-glow { animation: ph-glow-pulse 2.6s ease-in-out infinite; }
+@keyframes ph-glow-pulse {
+  0%,100%{opacity:0.6} 50%{opacity:1}
+}
+
+/* ── Rate Match Widget ──────────────────────────────── */
+.rmw {
+  display: flex; align-items: center; gap: 16px;
+  padding: 14px 18px;
+  background: linear-gradient(155deg,#FFF8EE 0%,#ECFAEE 100%);
+  border: 1px solid rgba(63,185,76,0.25); border-radius: 12px;
+  margin-bottom: 4px; position: relative; overflow: hidden;
+}
+.rmw::before {
+  content: ''; position: absolute; inset: 0;
+  background: radial-gradient(ellipse at right center,rgba(63,185,76,0.08) 0%,transparent 60%);
+  pointer-events: none;
+}
+.rmw-icon {
+  flex: 0 0 auto; width: 36px; height: 36px; border-radius: 10px;
+  background: #F47A1F; color: #fff; display: grid; place-items: center;
+  box-shadow: 0 4px 10px -2px rgba(244,122,31,0.4);
+}
+.rmw-title { display: flex; flex-direction: column; flex: 1; min-width: 0; gap: 2px; }
+.rmw-title strong { font-size: 13px; font-weight: 700; color: var(--ink); }
+.rmw-title span { font-size: 12px; color: var(--text-muted); line-height: 1.4; }
+.rmw-compare { display: flex; align-items: center; gap: 12px; flex: 0 0 auto; }
+.rmw-side { display: flex; flex-direction: column; align-items: center; min-width: 72px; }
+.rmw-side-lbl { font-size: 9px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.12em; color: var(--text-muted); }
+.rmw-side-val { position: relative; font-size: 22px; font-weight: 800; letter-spacing: -0.02em; line-height: 1.1; margin-top: 2px; }
+.rmw-side-old .rmw-side-val { color: #9B9DBC; animation: rmw-fade 4s ease-in-out infinite; }
+.rmw-side-new .rmw-side-val { color: #2A7D34; animation: rmw-pop 4s ease-in-out infinite; transform-origin: center; }
+.rmw-slash {
+  position: absolute; inset: -2px -6px -2px -6px;
+  width: calc(100% + 12px); height: calc(100% + 4px);
+  pointer-events: none; stroke-dasharray: 100; stroke-dashoffset: 100;
+  animation: rmw-slash 4s ease-in-out infinite;
+}
+.rmw-arrow { flex: 0 0 auto; animation: rmw-arrow 4s ease-in-out infinite; }
+@keyframes rmw-fade { 0%,30%{opacity:1} 50%,90%{opacity:0.45} 100%{opacity:1} }
+@keyframes rmw-slash { 0%,25%{stroke-dashoffset:100} 40%{stroke-dashoffset:0} 90%{stroke-dashoffset:0} 100%{stroke-dashoffset:100} }
+@keyframes rmw-arrow { 0%,35%{opacity:0.3;transform:translateX(-4px)} 50%{opacity:1;transform:translateX(0)} 90%{opacity:1;transform:translateX(0)} 100%{opacity:0.3;transform:translateX(-4px)} }
+@keyframes rmw-pop { 0%,45%{opacity:0;transform:scale(0.8)} 60%{opacity:1;transform:scale(1.1)} 70%,90%{opacity:1;transform:scale(1)} 100%{opacity:0;transform:scale(0.8)} }
+
+/* ── Paw Approved ──────────────────────────────────── */
+.pam { width: 240px; height: 200px; margin: 0 auto; }
+.pam-svg { width: 100%; height: 100%; overflow: visible; }
+.pam-receipt { transform-origin: 120px 100px; animation: pam-shake 4s ease-in-out infinite; }
+@keyframes pam-shake { 0%,100%{transform:rotate(-1deg)} 50%{transform:rotate(1deg)} }
+.pam-paw { opacity: 0; transform-origin: 95px 80px; animation: pam-paw 4s ease-in-out infinite; }
+@keyframes pam-paw {
+  0%,20%{opacity:0;transform:translate(95px,0px) scale(1.6)}
+  35%{opacity:1;transform:translate(95px,80px) scale(1)}
+  60%,100%{opacity:1;transform:translate(95px,80px) scale(1)}
+}
+.pam-stamp { opacity: 0; transform-origin: 120px 130px; animation: pam-stamp 4s ease-in-out infinite; }
+@keyframes pam-stamp {
+  0%,50%{opacity:0;transform:scale(1.6)}
+  62%{opacity:1;transform:scale(0.92)}
+  68%{opacity:1;transform:scale(1.05)}
+  74%,100%{opacity:1;transform:scale(1)}
+}
+
+/* ── Funding Timeline ──────────────────────────────── */
+.ftl { margin: 0 auto; max-width: 880px; width: 100%; }
+.ftl-nodes { display: grid; grid-template-columns: 1fr auto 1fr auto 1fr; align-items: start; }
+.ftl-node { display: flex; flex-direction: column; align-items: center; text-align: center; padding: 0 12px; }
+.ftl-cal {
+  width: 88px; background: #fff; border: 1.5px solid var(--line);
+  border-radius: 10px; overflow: hidden; box-shadow: var(--shadow-sm); margin-bottom: 14px;
+}
+.ftl-cal-h { font-size: 9px; font-weight: 800; background: #494A7D; color: #fff; padding: 5px 0; letter-spacing: 0.16em; }
+.ftl-cal-d { font-size: 36px; font-weight: 800; color: var(--ink); padding: 8px 0 12px; line-height: 1; }
+.ftl-cal-active .ftl-cal-h { background: #F47A1F; }
+.ftl-cal-active { animation: ftl-active 4s ease-in-out infinite; }
+@keyframes ftl-active { 0%,25%{transform:scale(1)} 50%{transform:scale(1.04);box-shadow:0 6px 20px -6px rgba(244,122,31,0.4)} 100%{transform:scale(1)} }
+.ftl-cal-funded { border-color: #3FB94C; background: linear-gradient(155deg,#fff 0%,#ECFAEE 100%); position: relative; }
+.ftl-cal-funded .ftl-cal-h { background: #3FB94C; }
+.ftl-cal-funded .ftl-cal-d { color: #3FB94C; }
+.ftl-cal-stamp {
+  position: absolute; bottom: 6px; right: 8px;
+  width: 22px; height: 22px; border-radius: 50%;
+  background: #3FB94C; color: #fff; display: grid; place-items: center;
+  font-weight: 900; font-size: 13px;
+  box-shadow: 0 4px 10px -2px rgba(63,185,76,0.5);
+  animation: ftl-stamp 4s ease-in-out infinite;
+}
+@keyframes ftl-stamp { 0%,60%{opacity:0;transform:scale(0)} 72%{opacity:1;transform:scale(1.3)} 82%,100%{opacity:1;transform:scale(1)} }
+.ftl-label { font-size: 14px; font-weight: 700; color: var(--ink); margin: 0 0 4px; }
+.ftl-sub { font-size: 12px; color: var(--text-muted); line-height: 1.45; max-width: 200px; }
+.ftl-connect { align-self: center; margin-top: 24px; width: 80px; height: 2px; background: #DCDCEA; position: relative; }
+.ftl-connect span { position: absolute; inset: 0; background: #3FB94C; transform: scaleX(0); transform-origin: left; animation: ftl-line 4s ease-in-out infinite; }
+.ftl-connect-1 span { animation-delay: 0.4s; }
+.ftl-connect-2 span { animation-delay: 1.6s; }
+@keyframes ftl-line { 0%,30%{transform:scaleX(0)} 50%{transform:scaleX(1)} 90%{transform:scaleX(1)} 100%{transform:scaleX(0)} }
+
+/* ── Success screen ────────────────────────────────── */
+.tg-success {
+  flex: 1; display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+  padding: 32px; text-align: center; position: relative; overflow: hidden;
+  min-height: calc(100vh - 60px);
+}
+.tg-success-mark { margin: 0 auto 18px; display: flex; align-items: center; justify-content: center; }
+.tg-success h1 { font-size: 32px; font-weight: 700; letter-spacing: -0.025em; color: var(--ink); margin: 0 0 10px; }
+.tg-success p { font-size: 15px; color: var(--text-muted); line-height: 1.55; margin: 0 auto 26px; max-width: 500px; }
+.tg-confetti { position: absolute; inset: 0; pointer-events: none; overflow: hidden; }
+.tg-confetti span { position: absolute; width: 8px; height: 14px; top: -20px; border-radius: 2px; animation: tg-fall 3s linear forwards; }
+@keyframes tg-fall { to { transform: translateY(900px) rotate(720deg); opacity: 0; } }
+.tg-restart {
+  margin-top: 10px; font-size: 12px; color: var(--text-muted); cursor: pointer;
+  background: none; border: none; text-decoration: underline;
+  text-underline-offset: 2px;
+}
+.tg-restart:hover { color: var(--ink); }
+
+/* ── Hint text below field ─────────────────────────── */
+.tg-field-hint { font-size: 11px; color: var(--text-muted); margin-top: 4px; }
+
+/* ── Animations pulse ──────────────────────────────── */
+@keyframes vbpulse { 50%{box-shadow:0 0 0 8px rgba(63,185,76,0);} }
+</style>
+</head>
+<body>
+<div id="root"></div>
+
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+
+<script type="text/babel">
+const { useState, useCallback, useEffect, useRef } = React;
+
+// ─── Data ────────────────────────────────────────────────────
+const BUSINESS_TYPES = [
+  { v: 'sole', l: 'Sole proprietorship' },
+  { v: 'llc', l: 'LLC' },
+  { v: 'scorp', l: 'S-Corp' },
+  { v: 'ccorp', l: 'C-Corp' },
+  { v: 'partner', l: 'Partnership' },
+  { v: 'nonprofit', l: 'Non-profit' },
+];
+const INDUSTRIES = [
+  'Restaurant / Food Service','Retail / E-commerce','Professional Services',
+  'Health & Wellness','Beauty & Personal Care','Trades & Contracting',
+  'Auto / Repair','Education','Other',
+];
+const PROCESSING_VOLUMES = [
+  '< $10k / month','$10k – $50k','$50k – $250k',
+  '$250k – $1M','$1M – $5M','$5M+',
+];
+const TICKET_SIZES = ['< $25','$25 – $100','$100 – $500','$500 – $2,500','$2,500+'];
+
+const STAGES = [
+  { eyebrow: 'Stage 1', title: 'Business Profile' },
+  { eyebrow: 'Stage 2', title: 'Owner & Control' },
+  { eyebrow: 'Stage 3', title: 'Processing Needs' },
+  { eyebrow: 'Stage 4', title: 'Banking' },
+  { eyebrow: 'Stage 5', title: 'Review & Sign' },
+];
+
+const initialForm = {
+  legalName:'', dba:'', businessType:'', ein:'', industry:'', website:'',
+  yearsInBusiness:'', address1:'', city:'', state:'', zip:'',
+  owner1FirstName:'', owner1LastName:'', owner1Title:'',
+  owner1Ownership:'', owner1Ssn:'', owner1Dob:'', owner1Email:'',
+  owner2FirstName:'', owner2LastName:'', owner2Title:'',
+  owner2Ownership:'', owner2Ssn:'', owner2Dob:'', owner2Email:'',
+  hasSecondOwner: false,
+  monthlyVolume:'', avgTicket:'', highestTicket:'', currentProcessor:'',
+  bankRoutingNumber:'', bankAccountNumber:'', bankName:'', bankAccountType:'',
+  consent: false,
+};
+
+function useFormData() {
+  const [data, setData] = useState(initialForm);
+  const [stage, setStage] = useState(0);
+  const update = useCallback((k, v) => setData(d => ({ ...d, [k]: v })), []);
+  const reset = useCallback(() => { setData(initialForm); setStage(0); }, []);
+  return { data, update, stage, setStage, reset };
+}
+
+function stageCompletion(d) {
+  const has = k => d[k] && String(d[k]).trim().length > 0;
+  const s1 = ['legalName','businessType','ein','industry','address1','city','state','zip'].filter(has).length / 8;
+  const s2 = ['owner1FirstName','owner1LastName','owner1Title','owner1Ownership','owner1Ssn','owner1Dob','owner1Email'].filter(has).length / 7;
+  const s3 = ['monthlyVolume','avgTicket'].filter(has).length / 2;
+  const s4 = ['bankRoutingNumber','bankAccountNumber','bankName'].filter(has).length / 3;
+  const s5 = d.consent ? 1 : 0;
+  return [s1, s2, s3, s4, s5];
+}
+
+// ─── Field helpers ───────────────────────────────────────────
+const Field = ({ label, required, children, full, hint }) => (
+  <div className={`tg-field${full ? ' tg-field-full' : ''}`}>
+    <label className="tg-lbl">
+      {label}{required && <span className="req">*</span>}
+    </label>
+    {children}
+    {hint && <div className="tg-field-hint">{hint}</div>}
+  </div>
+);
+
+// ─── Stage 1: Business Profile ───────────────────────────────
+const Stage1 = ({ d, u }) => (
+  <>
+    <div className="tg-fields tg-fields-3">
+      <Field label="Legal Business Name" required full>
+        <input className="tg-inp" placeholder="e.g. Sunbelt Coffee Company, LLC" value={d.legalName} onChange={e=>u('legalName',e.target.value)} />
+      </Field>
+      <Field label="Doing Business As">
+        <input className="tg-inp" placeholder="If different from legal name" value={d.dba} onChange={e=>u('dba',e.target.value)} />
+      </Field>
+      <Field label="Business Structure" required>
+        <select className="tg-sel" value={d.businessType} onChange={e=>u('businessType',e.target.value)}>
+          <option value="">Select…</option>
+          {BUSINESS_TYPES.map(b => <option key={b.v} value={b.v}>{b.l}</option>)}
+        </select>
+      </Field>
+      <Field label="Federal EIN" required>
+        <input className="tg-inp" placeholder="12-3456789" value={d.ein} onChange={e=>u('ein',e.target.value)} />
+      </Field>
+      <Field label="Industry" required>
+        <select className="tg-sel" value={d.industry} onChange={e=>u('industry',e.target.value)}>
+          <option value="">Select…</option>
+          {INDUSTRIES.map(i => <option key={i} value={i}>{i}</option>)}
+        </select>
+      </Field>
+      <Field label="Years in Business">
+        <select className="tg-sel" value={d.yearsInBusiness} onChange={e=>u('yearsInBusiness',e.target.value)}>
+          <option value="">Select…</option>
+          <option>Less than 1 year</option>
+          <option>1–2 years</option>
+          <option>3–5 years</option>
+          <option>6–10 years</option>
+          <option>10+ years</option>
+        </select>
+      </Field>
+    </div>
+    <div className="tg-section-divider"><span className="lbl">Business address</span><span className="line"/></div>
+    <div className="tg-fields tg-fields-addr">
+      <Field label="Street Address" required>
+        <input className="tg-inp" placeholder="1200 Main Street, Suite 200" value={d.address1} onChange={e=>u('address1',e.target.value)} />
+      </Field>
+      <Field label="City" required>
+        <input className="tg-inp" placeholder="Atlanta" value={d.city} onChange={e=>u('city',e.target.value)} />
+      </Field>
+      <Field label="State" required>
+        <input className="tg-inp" placeholder="GA" value={d.state} onChange={e=>u('state',e.target.value)} />
+      </Field>
+      <Field label="ZIP" required>
+        <input className="tg-inp" placeholder="30301" value={d.zip} onChange={e=>u('zip',e.target.value)} />
+      </Field>
+    </div>
+  </>
+);
+
+// ─── Stage 2: Owners ─────────────────────────────────────────
+const OwnerFields = ({ d, u, prefix, label, onRemove }) => (
+  <div className="tg-owner-block">
+    <div className="tg-section-divider">
+      <span className="lbl">{label}</span>
+      <span className="line"/>
+      {onRemove && <button className="tg-owner-remove" onClick={onRemove} type="button">Remove</button>}
+    </div>
+    <div className="tg-fields tg-fields-owner">
+      <Field label="First Name" required>
+        <input className="tg-inp" placeholder="Jane" value={d[`${prefix}FirstName`]} onChange={e=>u(`${prefix}FirstName`,e.target.value)} />
+      </Field>
+      <Field label="Last Name" required>
+        <input className="tg-inp" placeholder="Rivera" value={d[`${prefix}LastName`]} onChange={e=>u(`${prefix}LastName`,e.target.value)} />
+      </Field>
+      <Field label="Title">
+        <input className="tg-inp" placeholder="Owner / CEO" value={d[`${prefix}Title`]} onChange={e=>u(`${prefix}Title`,e.target.value)} />
+      </Field>
+      <Field label="Ownership %" required>
+        <input className="tg-inp" placeholder="100" value={d[`${prefix}Ownership`]} onChange={e=>u(`${prefix}Ownership`,e.target.value)} />
+      </Field>
+      <Field label="SSN (Last 4)" required>
+        <input className="tg-inp" placeholder="••••" maxLength={4} value={d[`${prefix}Ssn`]} onChange={e=>u(`${prefix}Ssn`,e.target.value)} />
+      </Field>
+      <Field label="Date of Birth" required>
+        <input className="tg-inp" placeholder="MM / DD / YYYY" value={d[`${prefix}Dob`]} onChange={e=>u(`${prefix}Dob`,e.target.value)} />
+      </Field>
+      <Field label="Email">
+        <input className="tg-inp" placeholder="jane@business.com" type="email" value={d[`${prefix}Email`]} onChange={e=>u(`${prefix}Email`,e.target.value)} />
+      </Field>
+    </div>
+  </div>
+);
+
+const Stage2 = ({ d, u }) => (
+  <>
+    <OwnerFields d={d} u={u} prefix="owner1" label="Primary Owner" />
+    {d.hasSecondOwner ? (
+      <OwnerFields d={d} u={u} prefix="owner2" label="Additional Owner" onRemove={() => u('hasSecondOwner', false)} />
+    ) : (
+      <button className="tg-owner2-toggle" onClick={() => u('hasSecondOwner', true)}>
+        <span className="plus">+</span>
+        Add another owner with 25%+ stake
+      </button>
+    )}
+  </>
+);
+
+// ─── Stage 3: Processing volume ──────────────────────────────
+const RateMatchWidget = () => (
+  <div className="rmw">
+    <div className="rmw-icon" aria-hidden="true">
+      <svg width="20" height="20" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M8 1l2 4.5 5 .7-3.6 3.5.85 5L8 12.4l-4.25 2.3.85-5L1 6.2l5-.7L8 1z"/>
+      </svg>
+    </div>
+    <div className="rmw-title">
+      <strong>We'll match or beat your current rate.</strong>
+      <span>Tell us what you pay today — we promise to undercut it, or you walk.</span>
+    </div>
+    <div className="rmw-compare">
+      <div className="rmw-side rmw-side-old">
+        <span className="rmw-side-lbl">Your processor</span>
+        <span className="rmw-side-val">
+          3.50%
+          <svg className="rmw-slash" viewBox="0 0 100 40" aria-hidden="true">
+            <line x1="6" y1="34" x2="94" y2="6" stroke="#E54848" strokeWidth="4" strokeLinecap="round"/>
+          </svg>
+        </span>
+      </div>
+      <svg className="rmw-arrow" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#3FB94C" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M5 12 h14 M13 6 l6 6 -6 6"/>
+      </svg>
+      <div className="rmw-side rmw-side-new">
+        <span className="rmw-side-lbl">With Tiger</span>
+        <span className="rmw-side-val">2.99%</span>
+      </div>
+    </div>
+  </div>
+);
+
+const Stage3 = ({ d, u }) => (
+  <>
+    <RateMatchWidget/>
+    <div className="tg-fields tg-fields-3">
+      <Field label="Estimated Monthly Volume" required>
+        <select className="tg-sel" value={d.monthlyVolume} onChange={e=>u('monthlyVolume',e.target.value)}>
+          <option value="">Select…</option>
+          {PROCESSING_VOLUMES.map(v => <option key={v}>{v}</option>)}
+        </select>
+      </Field>
+      <Field label="Average Ticket" required>
+        <select className="tg-sel" value={d.avgTicket} onChange={e=>u('avgTicket',e.target.value)}>
+          <option value="">Select…</option>
+          {TICKET_SIZES.map(v => <option key={v}>{v}</option>)}
+        </select>
+      </Field>
+      <Field label="Highest Single Ticket">
+        <input className="tg-inp" placeholder="e.g. $4,200" value={d.highestTicket} onChange={e=>u('highestTicket',e.target.value)} />
+      </Field>
+    </div>
+    <div className="tg-rate-card tg-rate-card-slim">
+      <Field label="Current Processor (Optional)" full>
+        <input className="tg-inp" placeholder="e.g. Square, Stripe, Toast — leave blank if none" value={d.currentProcessor||''} onChange={e=>u('currentProcessor',e.target.value)} />
+      </Field>
+      <label className="tg-rate-card-upload">
+        <input type="file" hidden/>
+        <span className="tg-rate-card-upload-icon">
+          <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M8 12V3M4.5 6.5L8 3l3.5 3.5M2.5 13h11"/>
+          </svg>
+        </span>
+        <span>
+          <strong>Upload last month's statement</strong>
+          <em>PDF or image · we'll beat the effective rate</em>
+        </span>
+      </label>
+    </div>
+  </>
+);
+
+// ─── Stage 4: Banking ────────────────────────────────────────
+const Stage4 = ({ d, u }) => (
+  <>
+    <div className="tg-fields tg-fields-3">
+      <Field label="Bank Name" required full>
+        <input className="tg-inp" placeholder="Wells Fargo" value={d.bankName} onChange={e=>u('bankName',e.target.value)} />
+      </Field>
+      <Field label="Routing Number" required>
+        <input className="tg-inp" placeholder="9 digits" maxLength={9} value={d.bankRoutingNumber} onChange={e=>u('bankRoutingNumber',e.target.value)} />
+      </Field>
+      <Field label="Account Number" required>
+        <input className="tg-inp" placeholder="••••••••" value={d.bankAccountNumber} onChange={e=>u('bankAccountNumber',e.target.value)} />
+      </Field>
+      <Field label="Account Type" required>
+        <select className="tg-sel" value={d.bankAccountType||''} onChange={e=>u('bankAccountType',e.target.value)}>
+          <option value="">Select…</option>
+          <option>Business checking</option>
+          <option>Business savings</option>
+        </select>
+      </Field>
+    </div>
+    <div className="tg-bank-trust">
+      <div className="tg-bank-trust-icon">
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+          <path d="M8 1l6 3v4c0 4-3 6.5-6 7-3-.5-6-3-6-7V4l6-3z"/>
+          <path d="M5.5 8l2 2 3.5-3.5"/>
+        </svg>
+      </div>
+      <div className="tg-bank-trust-body">
+        <strong>Bank-Grade Encryption.</strong>{' '}
+        Account numbers are encrypted at rest and tokenized for verification — never stored in plain text.
+      </div>
+    </div>
+  </>
+);
+
+// ─── Stage 5: Review ─────────────────────────────────────────
+const ReviewRow = ({ label, value }) => (
+  <div className="va-review-row">
+    <span className="lbl">{label}</span>
+    <span className={`val ${!value ? 'empty' : ''}`}>{value || '— not provided'}</span>
+  </div>
+);
+
+const Stage5 = ({ d, u, setStage }) => {
+  const businessTypeLabel = BUSINESS_TYPES.find(b => b.v === d.businessType)?.l;
+  return (
+    <>
+      <div className="va-review-grid">
+        <div className="va-review-card">
+          <div className="va-review-head">
+            <p className="va-review-title">Business</p>
+            <button className="va-review-edit" onClick={() => setStage(1)}>Edit</button>
+          </div>
+          <ReviewRow label="Legal name" value={d.legalName} />
+          <ReviewRow label="DBA" value={d.dba} />
+          <ReviewRow label="Structure" value={businessTypeLabel} />
+          <ReviewRow label="EIN" value={d.ein} />
+          <ReviewRow label="Industry" value={d.industry} />
+          <ReviewRow label="Address" value={d.address1 ? `${d.address1}, ${d.city}, ${d.state} ${d.zip}` : ''} />
+        </div>
+        <div className="va-review-card">
+          <div className="va-review-head">
+            <p className="va-review-title">Owners</p>
+            <button className="va-review-edit" onClick={() => setStage(2)}>Edit</button>
+          </div>
+          <ReviewRow label="Primary" value={[d.owner1FirstName, d.owner1LastName].filter(Boolean).join(' ')} />
+          <ReviewRow label="Title" value={d.owner1Title} />
+          <ReviewRow label="Ownership" value={d.owner1Ownership ? `${d.owner1Ownership}%` : ''} />
+          {d.hasSecondOwner && <>
+            <ReviewRow label="Additional" value={[d.owner2FirstName, d.owner2LastName].filter(Boolean).join(' ')} />
+            <ReviewRow label="Ownership" value={d.owner2Ownership ? `${d.owner2Ownership}%` : ''} />
+          </>}
+        </div>
+        <div className="va-review-card">
+          <div className="va-review-head">
+            <p className="va-review-title">Processing</p>
+            <button className="va-review-edit" onClick={() => setStage(3)}>Edit</button>
+          </div>
+          <ReviewRow label="Volume" value={d.monthlyVolume} />
+          <ReviewRow label="Avg ticket" value={d.avgTicket} />
+          <ReviewRow label="High ticket" value={d.highestTicket} />
+          <ReviewRow label="Current proc." value={d.currentProcessor || '— none'} />
+        </div>
+        <div className="va-review-card">
+          <div className="va-review-head">
+            <p className="va-review-title">Banking</p>
+            <button className="va-review-edit" onClick={() => setStage(4)}>Edit</button>
+          </div>
+          <ReviewRow label="Bank" value={d.bankName} />
+          <ReviewRow label="Routing" value={d.bankRoutingNumber ? `••••${d.bankRoutingNumber.slice(-4)}` : ''} />
+          <ReviewRow label="Account" value={d.bankAccountNumber ? `••••${d.bankAccountNumber.slice(-4)}` : ''} />
+          <ReviewRow label="Type" value={d.bankAccountType} />
+        </div>
+      </div>
+      <label className="va-consent">
+        <input type="checkbox" checked={d.consent} onChange={e=>u('consent',e.target.checked)} />
+        <span className="va-consent-box">
+          <svg width="11" height="11" viewBox="0 0 11 11" fill="none">
+            <path d="M1 5.5L4 8.5L10 1.5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+          </svg>
+        </span>
+        <span>
+          I certify the information above is accurate. I authorize Tiger Payments to verify identity, run a soft credit check, and pull bank verification. I agree to the <strong>Merchant Agreement</strong> and <strong>Privacy Policy</strong>.
+        </span>
+      </label>
+    </>
+  );
+};
+
+const StageComponents = { 1: Stage1, 2: Stage2, 3: Stage3, 4: Stage4, 5: Stage5 };
+
+function stageQuestion(stage) {
+  return ['','Tell Us About Your Business','Who Owns 25% or More?',"What's Your Processing Volume?",'Where Should Funds Settle?','One Last Look Before You Submit'][stage] || '';
+}
+function stageDescription(stage) {
+  return [
+    '',
+    "The basics about your business. Enter this once and we'll carry it through the rest of your application.",
+    "Anyone with 25% or more ownership needs to be listed. We're required to verify their identity.",
+    "Estimate your monthly volume — we'll match or beat your current rate before you finish.",
+    "Where should funds settle? Standard funding lands by 8am ET the next business day.",
+    "Quick scan to make sure everything's right, then sign and submit.",
+  ][stage] || '';
+}
+
+// ─── Header ──────────────────────────────────────────────────
+const Header = () => (
+  <div className="tg-hdr">
+    <div className="tg-logo">
+      <img src="assets/tiger-logo.png" alt="Tiger Payment Solutions" className="tg-logo-img"
+        onError={e => { e.target.style.display='none'; e.target.nextSibling.style.display='flex'; }}
+      />
+      <span className="tg-logo-mark" style={{display:'none'}}>T</span>
+    </div>
+    <div className="tg-divider"/>
+    <span className="tg-product">Merchant onboarding</span>
+    <div className="tg-hdr-spacer"/>
+    <a className="tg-hdr-help" href="tel:4072261151">
+      <svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M3 2.5h2.5l1 3-1.5 1.2a8.5 8.5 0 0 0 4.3 4.3l1.2-1.5 3 1V13a1.5 1.5 0 0 1-1.5 1.5C6.6 14.5 1.5 9.4 1.5 4A1.5 1.5 0 0 1 3 2.5z"/>
+      </svg>
+      Help · (407) 226-1151
+    </a>
+  </div>
+);
+
+// ─── Payments Hero ───────────────────────────────────────────
+const PaymentsHero = () => (
+  <div className="ph">
+    <div className="ph-bg" aria-hidden="true">
+      <svg viewBox="0 0 740 380" preserveAspectRatio="xMidYMid slice">
+        <defs>
+          <pattern id="ph-grid" x="0" y="0" width="40" height="40" patternUnits="userSpaceOnUse">
+            <circle cx="2" cy="2" r="1.2" fill="#3FB94C" opacity="0.18"/>
+          </pattern>
+        </defs>
+        <rect width="740" height="380" fill="url(#ph-grid)"/>
+      </svg>
+    </div>
+    <div className="ph-stage">
+      <svg viewBox="0 0 740 380" preserveAspectRatio="xMidYMid meet" className="ph-stage-svg">
+        <defs>
+          <radialGradient id="ph-glow" cx="50%" cy="50%" r="50%">
+            <stop offset="0%" stopColor="#3FB94C" stopOpacity="0.35"/>
+            <stop offset="60%" stopColor="#3FB94C" stopOpacity="0.10"/>
+            <stop offset="100%" stopColor="#3FB94C" stopOpacity="0"/>
+          </radialGradient>
+        </defs>
+        <circle cx="500" cy="200" r="120" fill="url(#ph-glow)" className="ph-glow"/>
+        <g className="ph-nfc">
+          <path d="M 430 200 a 70 70 0 0 1 0 0" stroke="#3FB94C" strokeWidth="2.4" fill="none" strokeLinecap="round" opacity="0">
+            <animate attributeName="d" values="M 440 200 a 60 60 0 0 1 0 0; M 380 200 a 120 120 0 0 1 0 0" dur="2.6s" repeatCount="indefinite" begin="0.2s"/>
+            <animate attributeName="opacity" values="0;0.9;0" dur="2.6s" repeatCount="indefinite" begin="0.2s"/>
+          </path>
+          <circle cx="500" cy="200" r="0" stroke="#3FB94C" strokeWidth="2" fill="none">
+            <animate attributeName="r" values="20;110" dur="2.6s" repeatCount="indefinite" begin="0.4s"/>
+            <animate attributeName="opacity" values="0.0;0.55;0" dur="2.6s" repeatCount="indefinite" begin="0.4s"/>
+          </circle>
+          <circle cx="500" cy="200" r="0" stroke="#3FB94C" strokeWidth="1.4" fill="none">
+            <animate attributeName="r" values="10;90" dur="2.6s" repeatCount="indefinite" begin="0.7s"/>
+            <animate attributeName="opacity" values="0.0;0.4;0" dur="2.6s" repeatCount="indefinite" begin="0.7s"/>
+          </circle>
+        </g>
+        <g transform="translate(456 132)">
+          <ellipse cx="44" cy="148" rx="60" ry="6" fill="#494A7D" opacity="0.10"/>
+          <rect x="0" y="0" width="88" height="140" rx="10" fill="#2C2A52"/>
+          <rect x="4" y="4" width="80" height="132" rx="8" fill="#3A3866"/>
+          <rect x="10" y="10" width="68" height="46" rx="4" fill="#0F1A20"/>
+          <g className="ph-screen">
+            <rect x="14" y="16" width="60" height="6" rx="1" fill="#3FB94C" opacity="0.85"/>
+            <rect x="14" y="26" width="44" height="4" rx="1" fill="#7FE08A" opacity="0.7"/>
+            <rect x="14" y="34" width="32" height="4" rx="1" fill="#7FE08A" opacity="0.45"/>
+            <circle cx="68" cy="44" r="6" fill="#3FB94C">
+              <animate attributeName="opacity" values="0.2;1;1;0.2" dur="2.6s" repeatCount="indefinite" begin="0.9s" keyTimes="0;0.15;0.85;1"/>
+            </circle>
+          </g>
+          <g fill="#5E5F94" opacity="0.85">
+            {Array.from({length:4}).map((_,r) =>
+              Array.from({length:3}).map((_,c) => (
+                <rect key={`${r}-${c}`} x={14+c*22} y={68+r*16} width="14" height="10" rx="2"/>
+              ))
+            )}
+          </g>
+          <rect x="4" y="128" width="80" height="4" rx="2" fill="#F47A1F"/>
+        </g>
+      </svg>
+      <div className="ph-card">
+        <div className="ph-card-face">
+          <div className="ph-card-shine"/>
+          <div className="ph-card-chip">
+            <svg viewBox="0 0 24 18" width="100%" height="100%">
+              <rect x="0.5" y="0.5" width="23" height="17" rx="2.5" fill="#E8C66C" stroke="#B59345" strokeWidth="0.5"/>
+              <path d="M0.5 6h7M0.5 12h7M16.5 6h7M16.5 12h7M9 0.5v17M15 0.5v17" stroke="#B59345" strokeWidth="0.5" fill="none"/>
+            </svg>
+          </div>
+          <div className="ph-card-wave">
+            <svg viewBox="0 0 16 16" width="100%" height="100%" fill="none" stroke="white" strokeWidth="1.6" strokeLinecap="round">
+              <path d="M3 6c1.5-1.5 3.5-1.5 5 0M2 9c2.5-2.5 6-2.5 8.5 0M1 12c3.5-3.5 8-3.5 11.5 0"/>
+            </svg>
+          </div>
+          <div className="ph-card-num">•••• 4821</div>
+          <div className="ph-card-brand">tiger</div>
+        </div>
+      </div>
+      <div className="ph-approval">
+        <div className="ph-approval-icon">
+          <svg viewBox="0 0 16 16" width="11" height="11" fill="none" stroke="white" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round"><path d="M3 8l3 3 7-7"/></svg>
+        </div>
+        <div className="ph-approval-body">
+          <div className="ph-approval-amt">+$42.18</div>
+          <div className="ph-approval-lbl">Approved · 2.99%</div>
+        </div>
+      </div>
+      <div className="ph-tile ph-tile-1">
+        <div className="ph-tile-icon">
+          <svg viewBox="0 0 16 16" width="11" height="11" fill="none" stroke="#3FB94C" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 8l3 3 7-7"/></svg>
+        </div>
+        <div className="ph-tile-body">
+          <div className="ph-tile-amount">+$128.40</div>
+          <div className="ph-tile-meta">Visa · 2:14 pm</div>
+        </div>
+      </div>
+      <div className="ph-tile ph-tile-2">
+        <div className="ph-tile-icon ph-tile-icon-light">
+          <svg viewBox="0 0 16 16" width="10" height="10" fill="none" stroke="#2E9039" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M8 2v12M3 5h7a2.5 2.5 0 0 1 0 5H5a2.5 2.5 0 0 0 0 5h8"/>
+          </svg>
+        </div>
+        <div className="ph-tile-body">
+          <div className="ph-tile-amount ph-tile-amount-deep">$3,481.92</div>
+          <div className="ph-tile-meta">Today's deposits</div>
+        </div>
+      </div>
+      <div className="ph-tile ph-tile-3">
+        <div className="ph-tile-icon ph-tile-icon-ink">
+          <svg viewBox="0 0 16 16" width="10" height="10" fill="none" stroke="#494A7D" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+            <rect x="2" y="4" width="12" height="9" rx="1.5"/><path d="M2 7.5h12"/>
+          </svg>
+        </div>
+        <div className="ph-tile-body">
+          <div className="ph-tile-amount ph-tile-amount-ink">+$56.00</div>
+          <div className="ph-tile-meta">Mastercard · tap</div>
+        </div>
+      </div>
+    </div>
+  </div>
+);
+
+// ─── Paw Approved ────────────────────────────────────────────
+const PawApprovedMark = () => (
+  <div className="pam">
+    <svg viewBox="0 0 240 200" preserveAspectRatio="xMidYMid meet" className="pam-svg">
+      <defs>
+        <filter id="pam-shadow" x="-20%" y="-20%" width="140%" height="140%">
+          <feGaussianBlur in="SourceAlpha" stdDeviation="4"/>
+          <feOffset dx="0" dy="6"/>
+          <feComponentTransfer><feFuncA type="linear" slope="0.18"/></feComponentTransfer>
+          <feMerge><feMergeNode/><feMergeNode in="SourceGraphic"/></feMerge>
+        </filter>
+      </defs>
+      <rect x="20" y="20" width="200" height="160" rx="8" fill="#fff" filter="url(#pam-shadow)" className="pam-receipt"/>
+      <line x1="40" y1="42" x2="200" y2="42" stroke="#E5E5EE" strokeDasharray="2 3"/>
+      <line x1="40" y1="58" x2="170" y2="58" stroke="#E5E5EE"/>
+      <line x1="40" y1="74" x2="180" y2="74" stroke="#E5E5EE"/>
+      <line x1="40" y1="90" x2="160" y2="90" stroke="#E5E5EE"/>
+      <line x1="40" y1="106" x2="200" y2="106" stroke="#E5E5EE"/>
+      <line x1="40" y1="122" x2="180" y2="122" stroke="#E5E5EE"/>
+      <g className="pam-paw" transform="translate(95 80)">
+        <g fill="#F47A1F">
+          <ellipse cx="0" cy="6" rx="22" ry="18"/>
+          <ellipse cx="-22" cy="-12" rx="7" ry="10"/>
+          <ellipse cx="-8" cy="-22" rx="7" ry="10"/>
+          <ellipse cx="8" cy="-22" rx="7" ry="10"/>
+          <ellipse cx="22" cy="-12" rx="7" ry="10"/>
+        </g>
+      </g>
+      <g className="pam-stamp" transform="translate(120 130)">
+        <g transform="rotate(-10)">
+          <rect x="-66" y="-19" width="132" height="38" rx="3" fill="none" stroke="#3FB94C" strokeWidth="3"/>
+          <rect x="-66" y="-19" width="132" height="38" rx="3" fill="none" stroke="#3FB94C" strokeWidth="1" opacity="0.5" transform="translate(2 2)"/>
+          <text x="0" y="6" fontSize="20" fontWeight="900" fill="#3FB94C" fontFamily="Inter" textAnchor="middle" letterSpacing="3">APPROVED</text>
+        </g>
+      </g>
+    </svg>
+  </div>
+);
+
+// ─── Funding Timeline ────────────────────────────────────────
+const FundingTimeline = () => (
+  <div className="ftl">
+    <div className="ftl-nodes">
+      <div className="ftl-node">
+        <div className="ftl-cal">
+          <div className="ftl-cal-h">TODAY</div>
+          <div className="ftl-cal-d">0</div>
+        </div>
+        <div className="ftl-label">Verify Your Bank</div>
+        <div className="ftl-sub">Link your business checking account — takes about 60 seconds.</div>
+      </div>
+      <div className="ftl-connect ftl-connect-1"><span/></div>
+      <div className="ftl-node">
+        <div className="ftl-cal ftl-cal-active">
+          <div className="ftl-cal-h">DAY 3</div>
+          <div className="ftl-cal-d">3</div>
+        </div>
+        <div className="ftl-label">Decision</div>
+        <div className="ftl-sub">We review your application — 99% approve on the first pass, usually within 48 hours.</div>
+      </div>
+      <div className="ftl-connect ftl-connect-2"><span/></div>
+      <div className="ftl-node">
+        <div className="ftl-cal ftl-cal-funded">
+          <div className="ftl-cal-h">DAY 4</div>
+          <div className="ftl-cal-d">4</div>
+          <div className="ftl-cal-stamp">$</div>
+        </div>
+        <div className="ftl-label">First Deposit</div>
+        <div className="ftl-sub">Card transactions settle into your bank account by 8 a.m. ET the next business day.</div>
+      </div>
+    </div>
+  </div>
+);
+
+// ─── Welcome Screen ──────────────────────────────────────────
+const WelcomeScreen = ({ onStart }) => (
+  <div className="vb-welcome-wrap">
+    <div className="vb-welcome-bg" aria-hidden="true">
+      <svg viewBox="0 0 1280 760" preserveAspectRatio="xMidYMid slice">
+        <defs>
+          <pattern id="vb-dots" x="0" y="0" width="32" height="32" patternUnits="userSpaceOnUse">
+            <circle cx="2" cy="2" r="1.4" fill="#3FB94C" opacity="0.18"/>
+          </pattern>
+        </defs>
+        <rect width="1280" height="760" fill="url(#vb-dots)"/>
+      </svg>
+    </div>
+    <div className="vb-welcome-content">
+      <div className="vb-welcome-left">
+        <h1 className="vb-welcome-h1">
+          Let's Get Your Storefront <em>Taking Payments.</em>
+        </h1>
+        <p className="vb-welcome-lede">
+          Five short stages — tell us about your business, owners, processing, and where to settle funds. Most merchants finish in seven minutes.
+        </p>
+        <div className="vb-pricing">
+          <PricingRow headline={<><strong>$0</strong> Setup Fees</>} sub="Get Started at No Cost."/>
+          <PricingRow headline={<>Just <strong>$20</strong>/Month</>} sub="Simple, Affordable, Predictable."/>
+          <PricingRow headline={<><strong>No</strong> Contracts</>} sub="Stay Because You Love It."/>
+          <PricingRow headline={<><strong>2.99%</strong></>} sub="Flat Rate."/>
+        </div>
+        <div className="vb-rate-match">
+          <div className="vb-rate-match-badge">
+            <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M8 1l2 4.5 5 .7-3.6 3.5.85 5L8 12.4l-4.25 2.3.85-5L1 6.2l5-.7L8 1z"/>
+            </svg>
+          </div>
+          <div className="vb-rate-match-body">
+            <strong>Already getting a better rate?</strong> Apply anyway — we'll <em>match or beat</em> any current offer. Zero reason to use any other processor.
+          </div>
+        </div>
+        <div className="vb-welcome-cta-row">
+          <button className="tg-btn tg-btn-primary tg-btn-large" onClick={onStart}>
+            Start Application →
+          </button>
+        </div>
+        <div className="vb-welcome-helpline">
+          <svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M3 2.5h2.5l1 3-1.5 1.2a8.5 8.5 0 0 0 4.3 4.3l1.2-1.5 3 1V13a1.5 1.5 0 0 1-1.5 1.5C6.6 14.5 1.5 9.4 1.5 4A1.5 1.5 0 0 1 3 2.5z"/>
+          </svg>
+          Need a hand? Call <a href="tel:4072261151"><strong>(407) 226-1151</strong></a> · this is also our help line.
+        </div>
+      </div>
+      <div className="vb-welcome-hero">
+        <PaymentsHero/>
+      </div>
+    </div>
+  </div>
+);
+
+const PricingRow = ({ headline, sub }) => (
+  <div className="vb-pricing-row">
+    <span className="vb-pricing-tick">
+      <svg width="11" height="11" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="2.6" strokeLinecap="round" strokeLinejoin="round"><path d="M3 8l3 3 7-7"/></svg>
+    </span>
+    <div className="vb-pricing-body">
+      <div className="vb-pricing-headline">{headline}</div>
+      <div className="vb-pricing-sub">{sub}</div>
+    </div>
+  </div>
+);
+
+// ─── Success Screen ──────────────────────────────────────────
+const SuccessScreen = ({ onRestart }) => {
+  const colors = ['#3FB94C','#F47A1F','#494A7D','#B6F3BF','#FFD16C'];
+  const pieces = Array.from({length: 60}, (_, i) => ({
+    left: Math.random() * 100,
+    delay: Math.random() * 1.5,
+    color: colors[i % colors.length],
+    rotate: Math.random() * 360,
+  }));
+  return (
+    <div className="tg-success">
+      <div className="tg-confetti" aria-hidden="true">
+        {pieces.map((p, i) => (
+          <span key={i} style={{
+            left: `${p.left}%`,
+            background: p.color,
+            animationDelay: `${p.delay}s`,
+            transform: `rotate(${p.rotate}deg)`,
+          }}/>
+        ))}
+      </div>
+      <div className="tg-success-mark">
+        <PawApprovedMark/>
+      </div>
+      <h1>Application Submitted 🎉</h1>
+      <p>Reference <strong>TGR-08471-A</strong> · We'll email you within 3 business days with your underwriting decision.</p>
+      <FundingTimeline/>
+      <button className="tg-restart" onClick={onRestart}>Start a new application</button>
+    </div>
+  );
+};
+
+// ─── Main Application ────────────────────────────────────────
+const App = () => {
+  const { data, update, stage, setStage, reset } = useFormData();
+  const completion = stageCompletion(data);
+
+  if (stage === 0) {
+    return (
+      <div className="app">
+        <Header/>
+        <WelcomeScreen onStart={() => setStage(1)}/>
+      </div>
+    );
+  }
+
+  if (stage === 6) {
+    return (
+      <div className="app">
+        <Header/>
+        <SuccessScreen onRestart={reset}/>
+      </div>
+    );
+  }
+
+  const stageIdx = stage - 1;
+  const Body = StageComponents[stage];
+
+  return (
+    <div className="app">
+      <Header/>
+      <div className="vb-body">
+        {/* Side rail */}
+        <aside className="vb-side">
+          <div>
+            <div className="vb-side-eyebrow">Application</div>
+            <h2 className="vb-side-title">Set Up Your<br/>Tiger Account</h2>
+          </div>
+          <nav className="vb-vsteps" aria-label="Application stages">
+            {STAGES.map((s, i) => {
+              const idx = i + 1;
+              const isActive = idx === stage;
+              const isDone = completion[i] >= 0.95 && !isActive;
+              return (
+                <button
+                  key={i}
+                  className={`vb-vstep${isActive ? ' vb-vstep-active' : ''}${isDone ? ' vb-vstep-done' : ''}`}
+                  onClick={() => setStage(idx)}
+                  aria-current={isActive ? 'step' : undefined}
+                >
+                  <span className="vb-vstep-num">{isDone ? '✓' : idx}</span>
+                  <span className="vb-vstep-body">
+                    <span className="vb-vstep-eyebrow">{s.eyebrow}</span>
+                    <span className="vb-vstep-title">{s.title}</span>
+                  </span>
+                </button>
+              );
+            })}
+          </nav>
+          <div className="vb-side-foot">
+            <div className="vb-side-helper">
+              <strong>Need a hand?</strong>
+              Call <a href="tel:4072261151">(407) 226-1151</a> · this is also our help line.
+            </div>
+          </div>
+        </aside>
+
+        {/* Form card */}
+        <div className="vb-stage-wrap">
+          <div className="vb-card">
+            <div className="vb-card-meta">
+              <span className="vb-card-meta-stage">{STAGES[stageIdx].title}</span>
+              <span style={{color:'var(--ink-300)'}}>Step {stage} of 5</span>
+            </div>
+            <h2 className="vb-card-title">{stageQuestion(stage)}</h2>
+            <p className="vb-card-sub">{stageDescription(stage)}</p>
+            <div className="vb-card-body">
+              <Body d={data} u={update} setStage={setStage}/>
+            </div>
+            <div className="vb-card-foot">
+              <button
+                className="tg-btn tg-btn-ghost"
+                onClick={() => setStage(stage === 1 ? 0 : stage - 1)}
+              >← Back</button>
+              <span/>
+              {stage < 5 ? (
+                <button className="tg-btn tg-btn-primary" onClick={() => setStage(stage + 1)}>
+                  Continue →
+                </button>
+              ) : (
+                <button
+                  className="tg-btn tg-btn-primary"
+                  disabled={!data.consent}
+                  onClick={() => setStage(6)}
+                >
+                  Submit application
+                </button>
+              )}
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+ReactDOM.createRoot(document.getElementById('root')).render(<App/>);
+</script>
+</body>
+</html>
