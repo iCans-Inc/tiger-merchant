@@ -665,11 +665,17 @@ a{color:inherit;text-decoration:none;}
   .vb-welcome-hero { display: none; }
   .vb-welcome-h1 { font-size: clamp(28px,8vw,40px); }
 
-  .ftl-nodes { grid-template-columns: 1fr; gap: 16px; }
+  .ftl-nodes { grid-template-columns: 1fr; gap: 0; }
   .ftl-connect { display: none; }
-  .ftl-node { flex-direction: row; text-align: left; gap: 16px; padding: 0; }
-  .ftl-cal { margin-bottom: 0; width: 64px; flex-shrink: 0; }
-  .ftl-cal-d { font-size: 26px; padding: 6px 0 8px; }
+  .ftl-node {
+    flex-direction: row; text-align: left; gap: 14px; padding: 12px 0;
+    border-bottom: 1px solid var(--line);
+  }
+  .ftl-node:last-child { border-bottom: none; }
+  .ftl-cal { margin-bottom: 0; width: 60px; flex-shrink: 0; }
+  .ftl-cal-d { font-size: 24px; padding: 4px 0 6px; }
+  .ftl-label { font-size: 13px; margin-bottom: 2px; }
+  .ftl-sub { font-size: 11px; max-width: none; }
 
   .rmw { flex-direction: column; align-items: flex-start; gap: 10px; }
   .rmw-compare { align-self: stretch; justify-content: center; }
@@ -694,7 +700,8 @@ a{color:inherit;text-decoration:none;}
   .vb-card-foot > span { display: none; }
   .vb-card-foot .tg-btn { flex: 1; justify-content: center; }
 
-  .tg-success h1 { font-size: 24px; }
+  .tg-success { padding: 24px 16px; }
+  .tg-success h1 { font-size: 22px; }
   .tg-success p { font-size: 13px; }
 }
 </style>
