@@ -29,13 +29,37 @@ const BUSINESS_TYPE_LABELS = {
 
 // ── Entry point ───────────────────────────────────────────────────────────────
 function doPost(e) {
+  var sheetError = null;
+  var emailError = null;
+
   try {
     const data = JSON.parse(e.postData.contents);
-    saveToSheet(data);
-    sendEmails(data);
+
+    try {
+      saveToSheet(data);
+    } catch (err) {
+      sheetError = err.toString();
+      Logger.log('Sheet error: ' + sheetError);
+    }
+
+    try {
+      sendEmails(data);
+    } catch (err) {
+      emailError = err.toString();
+      Logger.log('Email error: ' + emailError);
+    }
+
+    if (sheetError) {
+      return ok({ success: false, error: 'Sheet: ' + sheetError });
+    }
+    if (emailError) {
+      // Sheet saved — return a partial success so the form still advances
+      // but include the email error for visibility
+      return ok({ success: true, emailError: emailError });
+    }
     return ok({ success: true });
   } catch (err) {
-    Logger.log(err.toString());
+    Logger.log('Parse error: ' + err.toString());
     return ok({ success: false, error: err.toString() });
   }
 }
@@ -61,6 +85,7 @@ function saveToSheet(d) {
   const bizType    = BUSINESS_TYPE_LABELS[d.businessType] || d.businessType || '';
 
   sheet.appendRow([
+    d.submittedAt      || new Date().toLocaleString('en-US'), // Date Added
     d.dba || d.legalName,                          // Business Name
     d.legalName        || '',                       // Legal Company Name
     ownerName,                                      // Full Name
@@ -134,7 +159,7 @@ function buildEmail(d, includeBanking) {
   h += '<div style="background:#494A7D;border-radius:12px;padding:24px 28px;margin-bottom:16px;">';
   h += '<p style="color:#B6F3BF;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.1em;margin:0 0 6px;">Tiger Payments · New Application</p>';
   h += '<h1 style="color:#fff;font-size:22px;font-weight:700;letter-spacing:-0.02em;margin:0 0 4px;">' + esc(d.dba || d.legalName) + '</h1>';
-  h += '<p style="color:rgba(255,255,255,0.65);font-size:13px;margin:0;">Submitted ' + dateStr + (includeBanking ? ' · Full application including banking' : ' · Excluding banking information') + '</p>';
+  h += '<p style="color:rgba(255,255,255,0.65);font-size:13px;margin:0;">Submitted ' + (d.submittedAt || dateStr) + (includeBanking ? ' · Full application including banking' : ' · Excluding banking information') + '</p>';
   h += '</div>';
 
   // Business
