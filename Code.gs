@@ -27,6 +27,25 @@ const BUSINESS_TYPE_LABELS = {
   nonprofit: 'Non-profit',
 };
 
+// ── Auth test — run this ONCE in the editor to authorize Gmail ────────────────
+function testGmail() {
+  GmailApp.sendEmail(
+    Session.getActiveUser().getEmail(),
+    'Tiger App Script — Gmail auth confirmed',
+    'Gmail is authorized. You can delete this test.'
+  );
+  Logger.log('Test email sent to ' + Session.getActiveUser().getEmail());
+}
+
+// ── SSN helpers ───────────────────────────────────────────────────────────────
+// Returns last-4 masked: •••-••-1234
+function maskSsn(ssn) {
+  if (!ssn) return '';
+  var digits = String(ssn).replace(/\D/g, '');
+  if (digits.length < 4) return '•••-••-' + digits;
+  return '•••-••-' + digits.slice(-4);
+}
+
 // ── Entry point ───────────────────────────────────────────────────────────────
 function doPost(e) {
   var sheetError = null;
@@ -81,40 +100,39 @@ function saveToSheet(d) {
 
   const ownerName  = join([d.owner1FirstName, d.owner1LastName]);
   const owner2Name = d.hasSecondOwner ? join([d.owner2FirstName, d.owner2LastName]) : '';
+  const owner3Name = d.hasThirdOwner  ? join([d.owner3FirstName, d.owner3LastName]) : '';
   const address    = join([d.address1, d.city, d.state, d.zip], ', ');
   const bizType    = BUSINESS_TYPE_LABELS[d.businessType] || d.businessType || '';
 
   sheet.appendRow([
-    d.submittedAt      || new Date().toLocaleString('en-US'), // Date Added
-    d.dba || d.legalName,                          // Business Name
-    d.legalName        || '',                       // Legal Company Name
-    ownerName,                                      // Full Name
-    d.contactPhone     || d.owner1Phone || '',      // Phone
-    d.owner1Email      || '',                       // Email
-    address,                                        // Business Address
-    d.billingAddress   || '',                       // Billing Address
-    d.website          || '',                       // Website
-    bizType,                                        // Business Type
-    d.businessStartDate || '',                      // Business Start Date
-    d.whereToSendStatements || '',                  // Where to send Statements
-    ownerName,                                      // Owner Name
-    d.owner1Dob        || '',                       // Owner DOB
-    d.owner1Ownership  ? d.owner1Ownership + '%' : '', // Ownership %
-    d.owner1Title      || '',                       // Company Title
-    d.owner1Phone      || d.contactPhone || '',     // Owner Phone
-    d.owner1Address    || d.address1 || '',         // Owner Address
-    owner2Name,                                     // Second Owner Name
-    d.owner2Dob        || '',                       // Second Owner DOB
-    d.owner2Ownership  ? d.owner2Ownership + '%' : '', // Second Owner %
-    d.owner2Title      || '',                       // Second Owner Title
-    d.owner2Phone      || '',                       // Second Owner Phone
-    d.owner2Address    || '',                       // Second Owner Address
-    d.grossYearlySales || '',                       // Gross Yearly Sales
-    d.monthlyVolume    || '',                       // Yearly Credit Card Sales
-    d.avgTicket        || '',                       // AVG Transaction Amount
-    d.highestTicket    || '',                       // Highest Transaction Amount
-    d.numTrucks        || '',                       // Number of Trucks
-    d.numDumpsters     || '',                       // Number of Dumpsters
+    d.submittedAt           || new Date().toLocaleString('en-US'), // A  Date Added
+    d.dba || d.legalName,                                          // B  Business Name
+    d.legalName             || '',                                 // C  Legal Company Name
+    ownerName,                                                     // D  Full Name
+    d.contactPhone          || d.owner1Phone || '',                // E  Phone
+    d.owner1Email           || '',                                 // F  Email
+    address,                                                       // G  Business Address
+    d.billingAddress        || '',                                 // H  Billing Address
+    d.website               || '',                                 // I  Website
+    bizType,                                                       // J  Business Type
+    d.businessStartDate     || '',                                 // K  Business Start Date
+    d.whereToSendStatements || '',                                 // L  Where to send Statements
+    ownerName,                                                     // M  Owner Name
+    d.owner1Dob             || '',                                 // N  Owner DOB
+    d.owner1Ownership       ? d.owner1Ownership + '%' : '',        // O  Ownership %
+    d.owner1Title           || '',                                 // P  Company Title
+    d.owner1Phone           || d.contactPhone || '',               // Q  Owner Phone
+    d.owner1Address         || d.address1 || '',                   // R  Owner Address
+    owner2Name,                                                    // S  Second Owner Name
+    d.owner2Dob             || '',                                 // T  Second Owner DOB
+    d.owner2Ownership       ? d.owner2Ownership + '%' : '',        // U  Second Owner %
+    d.owner2Title           || '',                                 // V  Second Owner Title
+    d.owner2Phone           || '',                                 // W  Second Owner Phone
+    d.owner2Address         || '',                                 // X  Second Owner Address
+    d.grossYearlySales      || '',                                 // Y  Gross Yearly Sales
+    d.monthlyVolume         || '',                                 // Z  Yearly Credit Card Sales
+    d.numTrucks             || '',                                 // AA Number of Trucks
+    d.numDumpsters          || '',                                 // AB Number of Dumpsters
   ]);
 }
 
@@ -124,13 +142,13 @@ function sendEmails(d) {
   const subject     = 'New Tiger Merchant Application – ' + (d.dba || d.legalName || 'Unknown');
   const opts        = { name: FROM_NAME, attachments: attachments };
 
-  // onboarding@icans.ai — no banking
+  // onboarding@icans.ai — no banking, SSN masked to last 4
   GmailApp.sendEmail(
     ONBOARDING_EMAIL, subject, '',
     Object.assign({}, opts, { htmlBody: buildEmail(d, false) })
   );
 
-  // zach@tigerprocessing.com — everything
+  // zach@tigerprocessing.com — everything including banking + full SSN
   GmailApp.sendEmail(
     ZACH_EMAIL, subject, '',
     Object.assign({}, opts, { htmlBody: buildEmail(d, true) })
@@ -148,9 +166,15 @@ function buildAttachments(files) {
 function buildEmail(d, includeBanking) {
   const ownerName  = join([d.owner1FirstName, d.owner1LastName]);
   const owner2Name = d.hasSecondOwner ? join([d.owner2FirstName, d.owner2LastName]) : '';
+  const owner3Name = d.hasThirdOwner  ? join([d.owner3FirstName, d.owner3LastName]) : '';
   const address    = join([d.address1, d.city, d.state, d.zip], ', ');
   const bizType    = BUSINESS_TYPE_LABELS[d.businessType] || d.businessType || '';
   const dateStr    = new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
+
+  // SSN display: full for Zach, last-4 masked for onboarding
+  const ssn1Display = includeBanking ? (d.owner1Ssn || '') : maskSsn(d.owner1Ssn);
+  const ssn2Display = includeBanking ? (d.owner2Ssn || '') : maskSsn(d.owner2Ssn);
+  const ssn3Display = includeBanking ? (d.owner3Ssn || '') : maskSsn(d.owner3Ssn);
 
   var h = '';
   h += '<div style="font-family:Inter,Arial,sans-serif;max-width:680px;margin:0 auto;background:#F4F3F8;padding:24px;">';
@@ -183,7 +207,7 @@ function buildEmail(d, includeBanking) {
     row('Title',           d.owner1Title),
     row('Ownership',       d.owner1Ownership ? d.owner1Ownership + '%' : ''),
     row('Date of Birth',   d.owner1Dob),
-    row('SSN (Last 4)',    d.owner1Ssn),
+    row('SSN',             ssn1Display),
     row('Email',           d.owner1Email),
     row('Phone',           d.owner1Phone),
     row('Address',         d.owner1Address || address),
@@ -195,10 +219,23 @@ function buildEmail(d, includeBanking) {
       row('Title',            d.owner2Title),
       row('Ownership',        d.owner2Ownership ? d.owner2Ownership + '%' : ''),
       row('Date of Birth',    d.owner2Dob),
-      row('SSN (Last 4)',     d.owner2Ssn),
+      row('SSN',              ssn2Display),
       row('Email',            d.owner2Email),
       row('Phone',            d.owner2Phone),
       row('Address',          d.owner2Address),
+    ]);
+  }
+  if (d.hasThirdOwner && owner3Name) {
+    ownerRows.push(divider());
+    ownerRows = ownerRows.concat([
+      row('Third Owner',  owner3Name),
+      row('Title',        d.owner3Title),
+      row('Ownership',    d.owner3Ownership ? d.owner3Ownership + '%' : ''),
+      row('Date of Birth',d.owner3Dob),
+      row('SSN',          ssn3Display),
+      row('Email',        d.owner3Email),
+      row('Phone',        d.owner3Phone),
+      row('Address',      d.owner3Address),
     ]);
   }
   h += section('Ownership', ownerRows);

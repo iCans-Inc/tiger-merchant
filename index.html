@@ -765,6 +765,10 @@ const EMPTY_FORM = {
   owner2Ownership:'', owner2Ssn:'', owner2Dob:'', owner2Email:'',
   owner2Phone:'', owner2Address:'',
   hasSecondOwner: false,
+  owner3FirstName:'', owner3LastName:'', owner3Title:'',
+  owner3Ownership:'', owner3Ssn:'', owner3Dob:'', owner3Email:'',
+  owner3Phone:'', owner3Address:'',
+  hasThirdOwner: false,
   grossYearlySales:'', monthlyVolume:'', avgTicket:'',
   highestTicket:'', currentProcessor:'',
   numTrucks:'', numDumpsters:'',
@@ -788,6 +792,15 @@ function stageCompletion(d) {
   const s4 = ['bankRoutingNumber','bankAccountNumber','bankName'].filter(has).length / 3;
   const s5 = d.consent ? 1 : 0;
   return [s1, s2, s3, s4, s5];
+}
+
+// ─── Helpers ─────────────────────────────────────────────────
+function formatSSN(raw) {
+  // Strip non-digits, cap at 9
+  const digits = raw.replace(/\D/g, '').slice(0, 9);
+  if (digits.length <= 3) return digits;
+  if (digits.length <= 5) return digits.slice(0,3) + '-' + digits.slice(3);
+  return digits.slice(0,3) + '-' + digits.slice(3,5) + '-' + digits.slice(5);
 }
 
 // ─── Field helpers ───────────────────────────────────────────
@@ -887,8 +900,8 @@ const OwnerFields = ({ d, u, prefix, label, onRemove }) => (
       <Field label="Ownership %" required>
         <input className="tg-inp" placeholder="100" value={d[`${prefix}Ownership`]} onChange={e=>u(`${prefix}Ownership`,e.target.value)} />
       </Field>
-      <Field label="SSN (Last 4)" required>
-        <input className="tg-inp" placeholder="••••" maxLength={4} value={d[`${prefix}Ssn`]} onChange={e=>u(`${prefix}Ssn`,e.target.value)} />
+      <Field label="Social Security Number" required>
+        <input className="tg-inp" placeholder="•••-••-••••" maxLength={11} value={d[`${prefix}Ssn`]} onChange={e=>u(`${prefix}Ssn`, formatSSN(e.target.value))} />
       </Field>
       <Field label="Date of Birth" required>
         <input className="tg-inp" placeholder="MM / DD / YYYY" value={d[`${prefix}Dob`]} onChange={e=>u(`${prefix}Dob`,e.target.value)} />
@@ -906,19 +919,50 @@ const OwnerFields = ({ d, u, prefix, label, onRemove }) => (
   </div>
 );
 
-const Stage2 = ({ d, u }) => (
-  <>
-    <OwnerFields d={d} u={u} prefix="owner1" label="Primary Owner" />
-    {d.hasSecondOwner ? (
-      <OwnerFields d={d} u={u} prefix="owner2" label="Additional Owner" onRemove={() => u('hasSecondOwner', false)} />
-    ) : (
-      <button className="tg-owner2-toggle" onClick={() => u('hasSecondOwner', true)}>
-        <span className="plus">+</span>
-        Add another owner with 25%+ stake
-      </button>
-    )}
-  </>
-);
+const Stage2 = ({ d, u }) => {
+  const o1 = parseFloat(d.owner1Ownership) || 0;
+  const o2 = parseFloat(d.owner2Ownership) || 0;
+  const needOwner2 = o1 > 0 && o1 < 100;
+  const needOwner3 = needOwner2 && (o1 + o2) > 0 && (o1 + o2) < 100;
+
+  // Auto-show required owners
+  React.useEffect(() => {
+    if (needOwner2 && !d.hasSecondOwner) u('hasSecondOwner', true);
+    if (needOwner3 && !d.hasThirdOwner) u('hasThirdOwner', true);
+    if (!needOwner2 && d.hasSecondOwner) { u('hasSecondOwner', false); u('hasThirdOwner', false); }
+    if (!needOwner3 && d.hasThirdOwner) u('hasThirdOwner', false);
+  }, [needOwner2, needOwner3]);
+
+  return (
+    <>
+      <OwnerFields d={d} u={u} prefix="owner1" label="Primary Owner" />
+
+      {needOwner2 ? (
+        <OwnerFields d={d} u={u} prefix="owner2" label="Additional Owner (Required — total ownership under 100%)" />
+      ) : d.hasSecondOwner ? (
+        <OwnerFields d={d} u={u} prefix="owner2" label="Additional Owner" onRemove={() => { u('hasSecondOwner', false); u('hasThirdOwner', false); }} />
+      ) : (
+        <button className="tg-owner2-toggle" onClick={() => u('hasSecondOwner', true)}>
+          <span className="plus">+</span>
+          Add another owner with 25%+ stake
+        </button>
+      )}
+
+      {d.hasSecondOwner && (
+        needOwner3 ? (
+          <OwnerFields d={d} u={u} prefix="owner3" label="Third Owner (Required — total ownership still under 100%)" />
+        ) : d.hasThirdOwner ? (
+          <OwnerFields d={d} u={u} prefix="owner3" label="Third Owner" onRemove={() => u('hasThirdOwner', false)} />
+        ) : (
+          <button className="tg-owner2-toggle" onClick={() => u('hasThirdOwner', true)}>
+            <span className="plus">+</span>
+            Add a third owner
+          </button>
+        )
+      )}
+    </>
+  );
+};
 
 // ─── Stage 3: Processing volume ──────────────────────────────
 const RateMatchWidget = () => (
@@ -1109,6 +1153,12 @@ const Stage5 = ({ d, u, setStage }) => {
             <ReviewRow label="Ownership" value={d.owner2Ownership ? `${d.owner2Ownership}%` : ''} />
             <ReviewRow label="Phone" value={d.owner2Phone} />
             <ReviewRow label="Address" value={d.owner2Address} />
+          </>}
+          {d.hasThirdOwner && <>
+            <ReviewRow label="Third Owner" value={[d.owner3FirstName, d.owner3LastName].filter(Boolean).join(' ')} />
+            <ReviewRow label="Ownership" value={d.owner3Ownership ? `${d.owner3Ownership}%` : ''} />
+            <ReviewRow label="Phone" value={d.owner3Phone} />
+            <ReviewRow label="Address" value={d.owner3Address} />
           </>}
         </div>
         <div className="va-review-card">
