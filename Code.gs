@@ -43,7 +43,7 @@ const ICORE_WEBHOOK_SECRET = 'a153e4694e1eac08d0e32f824b94edaa64200f7d57ba6ac45e
 function backfillToICore() {
   const sheet   = SpreadsheetApp.openById(SHEET_ID).getSheets()[0];
   const rows    = sheet.getDataRange().getValues();
-  const cutoff  = new Date('2025-06-01T00:00:00');
+  const cutoff  = new Date('2026-06-01T00:00:00');
   var sent = 0, skipped = 0, errors = 0;
 
   for (var i = 1; i < rows.length; i++) {  // skip header row 0
