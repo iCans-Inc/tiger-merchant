@@ -27,6 +27,101 @@ const BUSINESS_TYPE_LABELS = {
   nonprofit: 'Non-profit',
 };
 
+// ── iCore backfill ────────────────────────────────────────────────────────────
+// Run backfillToICore() ONCE manually from the Apps Script editor to replay all
+// submissions from June 1 2025 onward into iCore (checklist + notes).
+// Sheet columns: A=Date, B=DBA, C=LegalName, D=OwnerName, E=Phone, F=Email,
+//   G=Address, H=BillingAddr, I=Website, J=BizType, K=StartDate,
+//   L=Statements, M=OwnerName, N=OwnerDOB, O=Ownership%, P=Title,
+//   Q=OwnerPhone, R=OwnerAddr, S=Owner2Name, T=Owner2DOB, U=Owner2%,
+//   V=Owner2Title, W=Owner2Phone, X=Owner2Addr, Y=GrossYearlySales,
+//   Z=MonthlyCCVol, AA=Trucks, AB=Dumpsters
+
+const ICORE_WEBHOOK_URL    = 'https://icore.icans.ai/api/webhooks/tiger-merchant';
+const ICORE_WEBHOOK_SECRET = 'a153e4694e1eac08d0e32f824b94edaa64200f7d57ba6ac45e0ad78958327e74';
+
+function backfillToICore() {
+  const sheet   = SpreadsheetApp.openById(SHEET_ID).getSheets()[0];
+  const rows    = sheet.getDataRange().getValues();
+  const cutoff  = new Date('2025-06-01T00:00:00');
+  var sent = 0, skipped = 0, errors = 0;
+
+  for (var i = 1; i < rows.length; i++) {  // skip header row 0
+    var r = rows[i];
+    var dateVal = r[0];  // Column A — Date Added
+    var rowDate = (dateVal instanceof Date) ? dateVal : new Date(dateVal);
+    if (isNaN(rowDate) || rowDate < cutoff) { skipped++; continue; }
+
+    // Split "First Last" owner names on first space
+    var ownerFull  = String(r[3] || '').trim();
+    var ownerParts = ownerFull.split(/\s+/);
+    var o1First    = ownerParts[0] || '';
+    var o1Last     = ownerParts.slice(1).join(' ') || '';
+
+    var owner2Full  = String(r[18] || '').trim();  // S
+    var owner2Parts = owner2Full.split(/\s+/);
+    var o2First     = owner2Parts[0] || '';
+    var o2Last      = owner2Parts.slice(1).join(' ') || '';
+    var hasOwner2   = !!owner2Full;
+
+    // Reconstruct payload from sheet columns (best-effort — no SSN/banking)
+    var payload = {
+      submittedAt:          String(r[0]  || ''),
+      dba:                  String(r[1]  || ''),
+      legalName:            String(r[2]  || ''),
+      owner1FirstName:      o1First,
+      owner1LastName:       o1Last,
+      contactPhone:         String(r[4]  || ''),
+      owner1Email:          String(r[5]  || ''),
+      address1:             String(r[6]  || ''),
+      billingAddress:       String(r[7]  || ''),
+      website:              String(r[8]  || ''),
+      businessType:         String(r[9]  || ''),
+      businessStartDate:    String(r[10] || ''),
+      whereToSendStatements:String(r[11] || ''),
+      owner1Dob:            String(r[13] || ''),
+      owner1Ownership:      String(r[14] || '').replace('%',''),
+      owner1Title:          String(r[15] || ''),
+      owner1Phone:          String(r[16] || ''),
+      owner1Address:        String(r[17] || ''),
+      hasSecondOwner:       hasOwner2,
+      owner2FirstName:      o2First,
+      owner2LastName:       o2Last,
+      owner2Dob:            String(r[19] || ''),
+      owner2Ownership:      String(r[20] || '').replace('%',''),
+      owner2Title:          String(r[21] || ''),
+      owner2Phone:          String(r[22] || ''),
+      owner2Address:        String(r[23] || ''),
+      grossYearlySales:     String(r[24] || ''),
+      monthlyVolume:        String(r[25] || ''),
+      numTrucks:            String(r[26] || ''),
+      numDumpsters:         String(r[27] || ''),
+      files: [],
+    };
+
+    try {
+      var response = UrlFetchApp.fetch(ICORE_WEBHOOK_URL, {
+        method: 'post',
+        contentType: 'application/json',
+        headers: { 'x-webhook-secret': ICORE_WEBHOOK_SECRET },
+        payload: JSON.stringify(payload),
+        muteHttpExceptions: true,
+      });
+      var code = response.getResponseCode();
+      var body = response.getContentText().slice(0, 200);
+      Logger.log('Row ' + (i+1) + ' [' + (payload.dba || payload.legalName) + ']: HTTP ' + code + ' — ' + body);
+      if (code >= 200 && code < 300) { sent++; } else { errors++; }
+    } catch (err) {
+      Logger.log('Row ' + (i+1) + ' ERROR: ' + err.toString());
+      errors++;
+    }
+
+    Utilities.sleep(300); // be polite — avoid rate limits
+  }
+
+  Logger.log('Backfill complete — sent: ' + sent + ', skipped (before June 1): ' + skipped + ', errors: ' + errors);
+}
+
 // ── Auth test — run this ONCE in the editor to authorize Gmail ────────────────
 function testGmail() {
   GmailApp.sendEmail(
