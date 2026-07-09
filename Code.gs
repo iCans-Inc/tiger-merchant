@@ -228,14 +228,25 @@ function saveToSheet(d) {
     d.monthlyVolume         || '',                                 // Z  Yearly Credit Card Sales
     d.numTrucks             || '',                                 // AA Number of Trucks
     d.numDumpsters          || '',                                 // AB Number of Dumpsters
+    d.signature ? 'Signed ✓' : '',                                 // AC Signature captured
   ]);
 }
 
 // ── Emails ────────────────────────────────────────────────────────────────────
 function sendEmails(d) {
-  const attachments = buildAttachments(d.files || []);
+  const attachments  = buildAttachments(d.files || []);
+  const inlineImages = {};
+
+  // Signature — attach as signature.png (so Tiger can drop it into their PDF)
+  // and reference it inline in the email body via cid:signature.
+  const sig = signatureBlob(d.signature);
+  if (sig) {
+    attachments.push(sig.copyBlob().setName('signature.png'));
+    inlineImages.signature = sig;
+  }
+
   const subject     = 'New Tiger Merchant Application – ' + (d.dba || d.legalName || 'Unknown');
-  const opts        = { name: FROM_NAME, attachments: attachments };
+  const opts        = { name: FROM_NAME, attachments: attachments, inlineImages: inlineImages };
 
   // onboarding@icans.ai — no banking, SSN masked to last 4
   GmailApp.sendEmail(
@@ -255,6 +266,17 @@ function buildAttachments(files) {
     const bytes = Utilities.base64Decode(f.data);
     return Utilities.newBlob(bytes, f.type || 'application/octet-stream', f.name);
   });
+}
+
+// Decode a data: URL (e.g. "data:image/png;base64,....") into a Blob.
+function signatureBlob(dataUrl) {
+  if (!dataUrl || String(dataUrl).indexOf('data:image') !== 0) return null;
+  var parts = String(dataUrl).split(',');
+  var mime  = (parts[0].match(/data:(.*?);/) || [])[1] || 'image/png';
+  var b64   = parts[1] || '';
+  if (!b64) return null;
+  var bytes = Utilities.base64Decode(b64);
+  return Utilities.newBlob(bytes, mime, 'signature.png');
 }
 
 // ── HTML email builder ────────────────────────────────────────────────────────
@@ -354,6 +376,15 @@ function buildEmail(d, includeBanking) {
       row('Account Number',  d.bankAccountNumber),
       row('Account Type',    d.bankAccountType),
     ]);
+  }
+
+  // Signature
+  if (d.signature) {
+    h += '<div style="background:#fff;border-radius:10px;padding:18px 20px;margin-bottom:14px;box-shadow:0 1px 3px rgba(0,0,0,0.06);">';
+    h += '<p style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.1em;color:#2E9039;margin:0 0 12px;">Signature</p>';
+    h += '<img src="cid:signature" alt="Customer signature" style="max-width:320px;height:auto;border:1px solid #E8E7EE;border-radius:8px;background:#fff;"/>';
+    h += '<p style="font-size:12px;color:#6E6A93;margin:10px 0 0;">Electronically signed by ' + esc(ownerName) + ' · ' + esc(d.submittedAt || dateStr) + '</p>';
+    h += '</div>';
   }
 
   h += '<p style="font-size:11px;color:#9B9DBC;text-align:center;margin-top:20px;">Tiger Payment Solutions · tigerapplication@icans.ai</p>';
