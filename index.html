@@ -316,6 +316,29 @@ a{color:inherit;text-decoration:none;}
 .va-sign-preview-empty { font-family: 'Inter', sans-serif; font-size: 13px; font-style: italic; color: var(--ink-300); }
 .va-sign-note { font-size: 11px; color: var(--text-muted); margin: 8px 0 0; line-height: 1.4; }
 
+/* ── Required documents (stage 5) ──────────────────── */
+.va-docs { margin: 4px 0 18px; }
+.va-docs-head { margin-bottom: 4px; }
+.va-docs-label { font-size: 13px; font-weight: 700; color: var(--ink); }
+.va-docs-label .req { color: var(--danger); margin-left: 2px; }
+.va-docs-intro { font-size: 12px; color: var(--text-muted); margin: 0 0 12px; line-height: 1.4; }
+.va-docs-list { display: flex; flex-direction: column; gap: 8px; }
+.va-doc-row {
+  display: flex; align-items: center; gap: 12px; width: 100%;
+  padding: 12px 14px; border-radius: 10px; text-align: left;
+  border: 1.5px solid var(--line-strong); background: var(--surface);
+  transition: all .15s ease;
+}
+.va-doc-row:hover { border-color: var(--brand); background: var(--brand-50); }
+.va-doc-icon { display: inline-flex; color: var(--brand); flex-shrink: 0; }
+.va-doc-name { flex: 1; font-size: 13px; font-weight: 600; color: var(--ink); }
+.va-doc-open { font-size: 12px; font-weight: 700; color: var(--brand); flex-shrink: 0; }
+.va-doc-seen { font-size: 12px; font-weight: 700; color: var(--brand); flex-shrink: 0; }
+.va-docs-ack { margin-top: 14px; }
+.va-docs-ack-disabled { opacity: 0.55; }
+.va-docs-ack-disabled input, .va-docs-ack-disabled .va-consent-box { cursor: not-allowed; }
+.va-docs-hint { font-style: italic; color: var(--text-muted); font-weight: 400; }
+
 /* ── Error banner ──────────────────────────────────── */
 .tg-error-banner {
   background: #FFF0EF; border: 1px solid rgba(201,53,43,0.3);
@@ -847,6 +870,7 @@ const EMPTY_FORM = {
   numTrucks:'', numDumpsters:'',
   bankRoutingNumber:'', bankAccountNumber:'', bankName:'', bankAccountType:'',
   signature: '',
+  docsReviewed: false,
   consent: false,
 };
 
@@ -864,7 +888,7 @@ function stageCompletion(d) {
   const s2 = ['owner1FirstName','owner1LastName','owner1Title','owner1Ownership','owner1Ssn','owner1Dob','owner1Email'].filter(has).length / 7;
   const s3 = ['monthlyVolume','avgTicket'].filter(has).length / 2;
   const s4 = ['bankRoutingNumber','bankAccountNumber','bankName'].filter(has).length / 3;
-  const s5 = (d.consent && d.signature) ? 1 : 0;
+  const s5 = (d.consent && d.signature && d.docsReviewed) ? 1 : 0;
   return [s1, s2, s3, s4, s5];
 }
 
@@ -1183,6 +1207,64 @@ const Stage4 = ({ d, u }) => (
   </>
 );
 
+// ─── Required documents (stage 5) ─────────────────────────────
+const REQUIRED_DOCS = [
+  { key: 'mpa', label: 'Merchant Processing Application', url: 'assets/merchant-processing-application.pdf' },
+  { key: 'pg',  label: 'Program Guide & Terms',           url: 'assets/program-guide.pdf' },
+];
+
+const DocReview = ({ reviewed, onChange }) => {
+  const [opened, setOpened] = useState({});
+  const allOpened = REQUIRED_DOCS.every(doc => opened[doc.key]);
+
+  const openDoc = (doc) => {
+    setOpened(o => ({ ...o, [doc.key]: true }));
+    window.open(doc.url, '_blank', 'noopener');
+  };
+
+  return (
+    <div className="va-docs">
+      <div className="va-docs-head">
+        <span className="va-docs-label">Review your documents<span className="req">*</span></span>
+      </div>
+      <p className="va-docs-intro">Please open and review both documents. We'll also email you copies for your records.</p>
+      <div className="va-docs-list">
+        {REQUIRED_DOCS.map(doc => (
+          <button key={doc.key} type="button" className="va-doc-row" onClick={() => openDoc(doc)}>
+            <span className="va-doc-icon">
+              <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M9 1.5H4A1.5 1.5 0 0 0 2.5 3v10A1.5 1.5 0 0 0 4 14.5h8A1.5 1.5 0 0 0 13.5 13V6L9 1.5z"/>
+                <path d="M9 1.5V6h4.5"/>
+              </svg>
+            </span>
+            <span className="va-doc-name">{doc.label}</span>
+            {opened[doc.key]
+              ? <span className="va-doc-seen">Viewed ✓</span>
+              : <span className="va-doc-open">View →</span>}
+          </button>
+        ))}
+      </div>
+      <label className={`va-consent va-docs-ack${allOpened ? '' : ' va-docs-ack-disabled'}`}>
+        <input
+          type="checkbox"
+          checked={reviewed}
+          disabled={!allOpened}
+          onChange={e => onChange(e.target.checked)}
+        />
+        <span className="va-consent-box">
+          <svg width="11" height="11" viewBox="0 0 11 11" fill="none">
+            <path d="M1 5.5L4 8.5L10 1.5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+          </svg>
+        </span>
+        <span>
+          I have opened and reviewed the <strong>Merchant Processing Application</strong> and the <strong>Program Guide &amp; Terms</strong> above.
+          {!allOpened && <em className="va-docs-hint"> — open both documents to enable this.</em>}
+        </span>
+      </label>
+    </div>
+  );
+};
+
 // ─── Signature pad ───────────────────────────────────────────
 const SIGN_FONTS = [
   { name: 'Dancing Script', family: 'Dancing Script' },
@@ -1434,6 +1516,7 @@ const Stage5 = ({ d, u, setStage }) => {
           <ReviewRow label="Type" value={d.bankAccountType} />
         </div>
       </div>
+      <DocReview reviewed={d.docsReviewed} onChange={v => u('docsReviewed', v)} />
       <SignaturePad onChange={v => u('signature', v)} />
       <label className="va-consent">
         <input type="checkbox" checked={d.consent} onChange={e=>u('consent',e.target.checked)} />
@@ -1776,7 +1859,7 @@ const App = () => {
   const completion = stageCompletion(data);
 
   const handleSubmit = async () => {
-    if (!data.consent || !data.signature) return;
+    if (!data.consent || !data.signature || !data.docsReviewed) return;
     setIsSubmitting(true);
     setSubmitError('');
     try {
@@ -1786,6 +1869,7 @@ const App = () => {
       const payload = {
         ...data,
         submittedAt,
+        origin: window.location.origin,
         files: uploadedFile ? [uploadedFile] : [],
       };
       const res = await fetch('/api/submit', {
@@ -1918,7 +2002,7 @@ const App = () => {
               ) : (
                 <button
                   className="tg-btn tg-btn-primary"
-                  disabled={!data.consent || !data.signature || isSubmitting}
+                  disabled={!data.consent || !data.signature || !data.docsReviewed || isSubmitting}
                   onClick={handleSubmit}
                 >
                   {isSubmitting ? 'Submitting…' : 'Submit application'}
