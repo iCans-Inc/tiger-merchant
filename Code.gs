@@ -163,6 +163,13 @@ function doPost(e) {
       Logger.log('Email error: ' + emailError);
     }
 
+    // Applicant document copy — non-fatal, never blocks the form
+    try {
+      sendCustomerCopy(data);
+    } catch (err) {
+      Logger.log('Customer copy error: ' + err.toString());
+    }
+
     if (sheetError) {
       return ok({ success: false, error: 'Sheet: ' + sheetError });
     }
@@ -279,6 +286,69 @@ function signatureBlob(dataUrl) {
   return Utilities.newBlob(bytes, mime, 'signature.png');
 }
 
+// ── Applicant document copy ─────────────────────────────────────────────────────
+// The two required disclosure PDFs live as static assets on the deployed site.
+// We fetch them from the submitting origin and email copies to the applicant.
+const REQUIRED_DOCS = [
+  { name: 'Merchant Processing Application.pdf', path: '/assets/merchant-processing-application.pdf' },
+  { name: 'Program Guide & Terms.pdf',           path: '/assets/program-guide.pdf' },
+];
+
+function fetchRequiredDocs(origin) {
+  if (!origin) { Logger.log('No origin on payload — cannot fetch documents'); return []; }
+  var base = String(origin).replace(/\/+$/, '');
+  var blobs = [];
+  for (var i = 0; i < REQUIRED_DOCS.length; i++) {
+    try {
+      var resp = UrlFetchApp.fetch(base + REQUIRED_DOCS[i].path, { muteHttpExceptions: true, followRedirects: true });
+      if (resp.getResponseCode() === 200) {
+        blobs.push(resp.getBlob().setName(REQUIRED_DOCS[i].name));
+      } else {
+        Logger.log('Doc fetch ' + REQUIRED_DOCS[i].path + ' -> HTTP ' + resp.getResponseCode());
+      }
+    } catch (err) {
+      Logger.log('Doc fetch error (' + REQUIRED_DOCS[i].path + '): ' + err);
+    }
+  }
+  return blobs;
+}
+
+// Email the applicant a copy of the disclosure documents they reviewed.
+function sendCustomerCopy(d) {
+  var to = String(d.owner1Email || '').trim();
+  if (!to) { Logger.log('No applicant email — skipping customer copy'); return; }
+  var docs = fetchRequiredDocs(d.origin);
+  if (!docs.length) { Logger.log('No documents fetched — skipping customer copy'); return; }
+
+  var firstName = String(d.owner1FirstName || '').trim();
+  var business  = d.dba || d.legalName || '';
+  var subject   = 'Your Tiger Payments application — your documents';
+  GmailApp.sendEmail(to, subject, '', {
+    name: FROM_NAME,
+    htmlBody: buildCustomerEmail(firstName, business),
+    attachments: docs,
+  });
+}
+
+function buildCustomerEmail(firstName, business) {
+  var greeting = firstName ? ('Hi ' + esc(firstName) + ',') : 'Hi,';
+  var h = '';
+  h += '<div style="font-family:Inter,Arial,sans-serif;max-width:560px;margin:0 auto;background:#F4F3F8;padding:24px;">';
+  h += '<div style="background:#fff;border-radius:14px;padding:28px 26px;">';
+  h += '<p style="font-size:15px;color:#1A1830;margin:0 0 14px;">' + greeting + '</p>';
+  h += '<p style="font-size:14px;line-height:1.6;color:#333;margin:0 0 14px;">Thank you for submitting your Tiger Payments merchant application' + (business ? (' for <strong>' + esc(business) + '</strong>') : '') + '. As required, attached to this email are copies of the documents you reviewed and signed:</p>';
+  h += '<ul style="font-size:14px;line-height:1.7;color:#333;margin:0 0 16px;padding-left:20px;">';
+  h += '<li>Merchant Processing Application</li>';
+  h += '<li>Program Guide &amp; Terms</li>';
+  h += '</ul>';
+  h += '<p style="font-size:14px;line-height:1.6;color:#333;margin:0 0 16px;">Please keep these for your records. Our team will review your application and follow up within 3 business days with your underwriting decision.</p>';
+  h += '<p style="font-size:13px;color:#777;margin:0;">Questions? Call us at (407) 226-1151.</p>';
+  h += '</div>';
+  h += '<p style="text-align:center;font-size:11px;color:#999;margin:16px 0 0;">Tiger Payment Solutions</p>';
+  h += '</div>';
+  return h;
+}
+
 // ── HTML email builder ────────────────────────────────────────────────────────
 function buildEmail(d, includeBanking) {
   const ownerName  = join([d.owner1FirstName, d.owner1LastName]);
@@ -384,6 +454,9 @@ function buildEmail(d, includeBanking) {
     h += '<p style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.1em;color:#2E9039;margin:0 0 12px;">Signature</p>';
     h += '<img src="cid:signature" alt="Customer signature" style="max-width:320px;height:auto;border:1px solid #E8E7EE;border-radius:8px;background:#fff;"/>';
     h += '<p style="font-size:12px;color:#6E6A93;margin:10px 0 0;">Electronically signed by ' + esc(ownerName) + ' · ' + esc(d.submittedAt || dateStr) + '</p>';
+    if (d.docsReviewed) {
+      h += '<p style="font-size:12px;color:#2E9039;margin:6px 0 0;">✓ Applicant confirmed review of the Merchant Processing Application and Program Guide before signing.</p>';
+    }
     h += '</div>';
   }
 
