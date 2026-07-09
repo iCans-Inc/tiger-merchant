@@ -7,6 +7,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Dancing+Script:wght@600&family=Great+Vibes&family=Pacifico&family=Satisfy&family=Sacramento&display=swap" rel="stylesheet">
 <style>
 :root {
   --brand: #3FB94C;
@@ -242,6 +243,78 @@ a{color:inherit;text-decoration:none;}
 .va-consent input:checked~.va-consent-box { background: var(--brand); border-color: var(--brand); color: white; }
 .va-consent-box svg { opacity: 0; transition: opacity .15s ease; color: white; }
 .va-consent input:checked~.va-consent-box svg { opacity: 1; }
+
+/* ── Signature (stage 5) ───────────────────────────── */
+.va-sign {
+  background: var(--surface); border: 1px solid var(--line-strong);
+  border-radius: 12px; padding: 14px 16px; margin-top: 12px;
+}
+.va-sign-head {
+  display: flex; align-items: center; justify-content: space-between;
+  gap: 10px; margin-bottom: 8px;
+}
+.va-sign-label {
+  font-size: 11px; font-weight: 700; color: var(--ink);
+  text-transform: uppercase; letter-spacing: 0.06em;
+}
+.va-sign-label .req { color: var(--danger); margin-left: 2px; }
+.va-sign-tabs {
+  display: inline-flex; gap: 2px; padding: 3px;
+  background: var(--ink-50); border: 1px solid var(--line); border-radius: 999px;
+}
+.va-sign-tab {
+  font-size: 11px; font-weight: 600; color: var(--ink-700);
+  padding: 4px 14px; border-radius: 999px; transition: all .15s ease;
+}
+.va-sign-tab-active { background: var(--surface); color: var(--ink); box-shadow: var(--shadow-sm); }
+.va-sign-drawwrap { position: relative; }
+.va-sign-clear {
+  position: absolute; top: 8px; right: 8px; z-index: 2;
+  font-size: 11px; font-weight: 600; color: var(--ink-700);
+  padding: 3px 10px; border-radius: 999px;
+  background: var(--surface); border: 1px solid var(--line-strong);
+}
+.va-sign-clear:hover { border-color: var(--ink); color: var(--ink); }
+.va-sign-pad {
+  position: relative; border-radius: 10px; overflow: hidden;
+  border: 1.5px dashed var(--line-strong); background: var(--bg);
+  height: 150px;
+}
+.va-sign-canvas { display: block; width: 100%; height: 100%; cursor: crosshair; }
+.va-sign-hint {
+  position: absolute; inset: 0; display: flex; align-items: center; justify-content: center;
+  color: var(--ink-300); font-size: 13px; font-style: italic; pointer-events: none;
+}
+.va-sign-input {
+  width: 100%; padding: 10px 14px; border-radius: 10px;
+  border: 1px solid var(--line-strong); background: var(--surface);
+  font-family: inherit; font-size: 14px; color: var(--text); outline: none;
+  transition: border-color .15s ease;
+}
+.va-sign-input:focus { border-color: var(--brand); }
+.va-sign-input::placeholder { color: var(--ink-300); }
+.va-sign-fonts {
+  display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+  gap: 8px; margin-top: 10px;
+}
+.va-sign-font {
+  border: 1.5px solid var(--line-strong); border-radius: 10px;
+  background: var(--surface); padding: 10px 8px;
+  font-size: 22px; line-height: 1.1; color: var(--text);
+  overflow: hidden; white-space: nowrap; text-overflow: ellipsis;
+  transition: all .15s ease;
+}
+.va-sign-font:hover { border-color: var(--ink-300); }
+.va-sign-font-active { border-color: var(--brand); background: var(--brand-50); box-shadow: 0 0 0 3px rgba(63,185,76,0.14); }
+.va-sign-preview {
+  margin-top: 10px; height: 88px; border-radius: 10px;
+  border: 1.5px dashed var(--line-strong); background: var(--bg);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 36px; color: var(--text); overflow: hidden; padding: 0 16px;
+  white-space: nowrap;
+}
+.va-sign-preview-empty { font-family: 'Inter', sans-serif; font-size: 13px; font-style: italic; color: var(--ink-300); }
+.va-sign-note { font-size: 11px; color: var(--text-muted); margin: 8px 0 0; line-height: 1.4; }
 
 /* ── Error banner ──────────────────────────────────── */
 .tg-error-banner {
@@ -773,6 +846,7 @@ const EMPTY_FORM = {
   highestTicket:'', currentProcessor:'',
   numTrucks:'', numDumpsters:'',
   bankRoutingNumber:'', bankAccountNumber:'', bankName:'', bankAccountType:'',
+  signature: '',
   consent: false,
 };
 
@@ -790,7 +864,7 @@ function stageCompletion(d) {
   const s2 = ['owner1FirstName','owner1LastName','owner1Title','owner1Ownership','owner1Ssn','owner1Dob','owner1Email'].filter(has).length / 7;
   const s3 = ['monthlyVolume','avgTicket'].filter(has).length / 2;
   const s4 = ['bankRoutingNumber','bankAccountNumber','bankName'].filter(has).length / 3;
-  const s5 = d.consent ? 1 : 0;
+  const s5 = (d.consent && d.signature) ? 1 : 0;
   return [s1, s2, s3, s4, s5];
 }
 
@@ -1109,6 +1183,181 @@ const Stage4 = ({ d, u }) => (
   </>
 );
 
+// ─── Signature pad ───────────────────────────────────────────
+const SIGN_FONTS = [
+  { name: 'Dancing Script', family: 'Dancing Script' },
+  { name: 'Great Vibes',    family: 'Great Vibes' },
+  { name: 'Pacifico',       family: 'Pacifico' },
+  { name: 'Satisfy',        family: 'Satisfy' },
+  { name: 'Sacramento',     family: 'Sacramento' },
+];
+
+// Render a typed name in a chosen font to a PNG data URL, auto-shrinking to fit.
+function renderTypedSignature(text, family) {
+  const ratio = 2, w = 620, h = 150, pad = 30;
+  const c = document.createElement('canvas');
+  c.width = w * ratio; c.height = h * ratio;
+  const ctx = c.getContext('2d');
+  ctx.scale(ratio, ratio);
+  ctx.fillStyle = '#1A1830';
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  let size = 58;
+  ctx.font = `${size}px "${family}"`;
+  while (ctx.measureText(text).width > (w - pad * 2) && size > 18) {
+    size -= 2;
+    ctx.font = `${size}px "${family}"`;
+  }
+  ctx.fillText(text, w / 2, h / 2 + 4);
+  return c.toDataURL('image/png');
+}
+
+// ── Draw mode ──
+const SignatureDraw = ({ onChange }) => {
+  const canvasRef = useRef(null);
+  const drawing = useRef(false);
+  const last = useRef({ x: 0, y: 0 });
+  const [inked, setInked] = useState(false);
+
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const ratio = Math.max(window.devicePixelRatio || 1, 1);
+    const rect = canvas.getBoundingClientRect();
+    canvas.width = rect.width * ratio;
+    canvas.height = rect.height * ratio;
+    const ctx = canvas.getContext('2d');
+    ctx.scale(ratio, ratio);
+    ctx.lineWidth = 2;
+    ctx.lineCap = 'round';
+    ctx.lineJoin = 'round';
+    ctx.strokeStyle = '#1A1830';
+  }, []);
+
+  const posFromEvent = (e) => {
+    const rect = canvasRef.current.getBoundingClientRect();
+    const src = e.touches && e.touches[0] ? e.touches[0] : e;
+    return { x: src.clientX - rect.left, y: src.clientY - rect.top };
+  };
+
+  const start = (e) => {
+    drawing.current = true;
+    last.current = posFromEvent(e);
+    if (!inked) setInked(true);
+  };
+  const move = (e) => {
+    if (!drawing.current) return;
+    const ctx = canvasRef.current.getContext('2d');
+    const p = posFromEvent(e);
+    ctx.beginPath();
+    ctx.moveTo(last.current.x, last.current.y);
+    ctx.lineTo(p.x, p.y);
+    ctx.stroke();
+    last.current = p;
+  };
+  const end = () => {
+    if (!drawing.current) return;
+    drawing.current = false;
+    onChange(canvasRef.current.toDataURL('image/png'));
+  };
+  const clear = () => {
+    const canvas = canvasRef.current;
+    const ctx = canvas.getContext('2d');
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    setInked(false);
+    onChange('');
+  };
+
+  return (
+    <div className="va-sign-drawwrap">
+      {inked && <button type="button" className="va-sign-clear" onClick={clear}>Clear</button>}
+      <div className="va-sign-pad">
+        <canvas
+          ref={canvasRef}
+          className="va-sign-canvas"
+          style={{ touchAction: 'none' }}
+          onMouseDown={start} onMouseMove={move} onMouseUp={end} onMouseLeave={end}
+          onTouchStart={start} onTouchMove={move} onTouchEnd={end}
+        />
+        {!inked && <span className="va-sign-hint">Sign here with your mouse or finger</span>}
+      </div>
+    </div>
+  );
+};
+
+// ── Type mode ──
+const SignatureType = ({ onChange }) => {
+  const [name, setName] = useState('');
+  const [fontIdx, setFontIdx] = useState(0);
+
+  useEffect(() => {
+    const fam = SIGN_FONTS[fontIdx].family;
+    const text = name.trim();
+    if (!text) { onChange(''); return; }
+    let cancelled = false;
+    const gen = () => { if (!cancelled) onChange(renderTypedSignature(text, fam)); };
+    if (document.fonts && document.fonts.load) {
+      document.fonts.load(`58px "${fam}"`, text).then(gen).catch(gen);
+    } else {
+      gen();
+    }
+    return () => { cancelled = true; };
+  }, [name, fontIdx]);
+
+  const activeFamily = SIGN_FONTS[fontIdx].family;
+  return (
+    <div>
+      <input
+        className="va-sign-input"
+        type="text"
+        placeholder="Type your full legal name"
+        value={name}
+        onChange={e => setName(e.target.value)}
+        maxLength={60}
+      />
+      <div className="va-sign-fonts">
+        {SIGN_FONTS.map((f, i) => (
+          <button
+            key={f.name}
+            type="button"
+            className={`va-sign-font${i === fontIdx ? ' va-sign-font-active' : ''}`}
+            style={{ fontFamily: `'${f.family}', cursive` }}
+            onClick={() => setFontIdx(i)}
+            title={f.name}
+          >
+            {name.trim() || 'Signature'}
+          </button>
+        ))}
+      </div>
+      <div className="va-sign-preview" style={{ fontFamily: `'${activeFamily}', cursive` }}>
+        {name.trim() ? name : <span className="va-sign-preview-empty">Your signature preview appears here</span>}
+      </div>
+    </div>
+  );
+};
+
+const SignaturePad = ({ onChange }) => {
+  const [mode, setMode] = useState('draw');
+  const switchTo = (m) => {
+    if (m === mode) return;
+    setMode(m);
+    onChange(''); // reset when switching methods so only the active one counts
+  };
+  return (
+    <div className="va-sign">
+      <div className="va-sign-head">
+        <span className="va-sign-label">Digital signature<span className="req">*</span></span>
+        <div className="va-sign-tabs" role="tablist">
+          <button type="button" className={`va-sign-tab${mode === 'draw' ? ' va-sign-tab-active' : ''}`} onClick={() => switchTo('draw')}>Draw</button>
+          <button type="button" className={`va-sign-tab${mode === 'type' ? ' va-sign-tab-active' : ''}`} onClick={() => switchTo('type')}>Type</button>
+        </div>
+      </div>
+      {mode === 'draw' ? <SignatureDraw onChange={onChange} /> : <SignatureType onChange={onChange} />}
+      <p className="va-sign-note">By signing, you adopt this as your electronic signature on this application. Tiger uses this signature to complete your merchant processing forms.</p>
+    </div>
+  );
+};
+
 // ─── Stage 5: Review ─────────────────────────────────────────
 const ReviewRow = ({ label, value }) => (
   <div className="va-review-row">
@@ -1185,6 +1434,7 @@ const Stage5 = ({ d, u, setStage }) => {
           <ReviewRow label="Type" value={d.bankAccountType} />
         </div>
       </div>
+      <SignaturePad onChange={v => u('signature', v)} />
       <label className="va-consent">
         <input type="checkbox" checked={d.consent} onChange={e=>u('consent',e.target.checked)} />
         <span className="va-consent-box">
@@ -1526,7 +1776,7 @@ const App = () => {
   const completion = stageCompletion(data);
 
   const handleSubmit = async () => {
-    if (!data.consent) return;
+    if (!data.consent || !data.signature) return;
     setIsSubmitting(true);
     setSubmitError('');
     try {
@@ -1668,7 +1918,7 @@ const App = () => {
               ) : (
                 <button
                   className="tg-btn tg-btn-primary"
-                  disabled={!data.consent || isSubmitting}
+                  disabled={!data.consent || !data.signature || isSubmitting}
                   onClick={handleSubmit}
                 >
                   {isSubmitting ? 'Submitting…' : 'Submit application'}
