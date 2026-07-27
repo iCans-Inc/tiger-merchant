@@ -706,6 +706,13 @@ a{color:inherit;text-decoration:none;}
 
 /* ── Hint text below field ─────────────────────────── */
 .tg-field-hint { font-size: 11px; color: var(--text-muted); margin-top: 4px; }
+/* ── Validation error states ─────────────────────── */
+.tg-field-error .tg-inp,
+.tg-field-error .tg-sel { border-color: var(--danger); background: #FEF6F5; }
+.tg-field-error .tg-inp:focus,
+.tg-field-error .tg-sel:focus { border-color: var(--danger); box-shadow: 0 0 0 4px rgba(201,53,43,0.14); }
+.tg-field-err { font-size: 11px; font-weight: 600; color: var(--danger); margin-top: 4px; }
+.va-error { outline: 1.5px solid var(--danger); outline-offset: 5px; border-radius: 8px; }
 
 /* ── Animations pulse ──────────────────────────────── */
 @keyframes vbpulse { 50%{box-shadow:0 0 0 8px rgba(63,185,76,0);} }
@@ -877,9 +884,47 @@ const EMPTY_FORM = {
 function useFormData() {
   const [data, setData] = useState(EMPTY_FORM);
   const [stage, setStage] = useState(0);
-  const update = useCallback((k, v) => setData(d => ({ ...d, [k]: v })), []);
-  const reset = useCallback(() => { setData(EMPTY_FORM); setStage(0); }, []);
-  return { data, update, stage, setStage, reset };
+  const [errors, setErrors] = useState({});
+  const update = useCallback((k, v) => {
+    setData(d => ({ ...d, [k]: v }));
+    // Clear a field's error as soon as the user edits it
+    setErrors(e => {
+      if (!e[k]) return e;
+      const n = { ...e }; delete n[k]; return n;
+    });
+  }, []);
+  const reset = useCallback(() => { setData(EMPTY_FORM); setStage(0); setErrors({}); }, []);
+  return { data, update, stage, setStage, reset, errors, setErrors };
+}
+
+// Which fields are required per stage (mirrors the * markers in the UI)
+const OWNER_REQUIRED = ['FirstName', 'LastName', 'Ownership', 'Ssn', 'Dob'];
+function requiredFieldsForStage(stage, d) {
+  switch (stage) {
+    case 1: return ['legalName', 'businessType', 'ein', 'industry', 'address1', 'city', 'state', 'zip'];
+    case 2: {
+      let keys = OWNER_REQUIRED.map(f => 'owner1' + f);
+      if (d.hasSecondOwner) keys = keys.concat(OWNER_REQUIRED.map(f => 'owner2' + f));
+      if (d.hasThirdOwner)  keys = keys.concat(OWNER_REQUIRED.map(f => 'owner3' + f));
+      return keys;
+    }
+    case 3: return ['monthlyVolume', 'avgTicket'];
+    case 4: return ['bankName', 'bankRoutingNumber', 'bankAccountNumber', 'bankAccountType'];
+    default: return [];
+  }
+}
+function validateStage(stage, d) {
+  const errs = {};
+  requiredFieldsForStage(stage, d).forEach(k => {
+    if (!d[k] || !String(d[k]).trim()) errs[k] = true;
+  });
+  return errs;
+}
+function scrollToFirstError() {
+  setTimeout(() => {
+    const el = document.querySelector('.tg-field-error, .va-error');
+    if (el && el.scrollIntoView) el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  }, 50);
 }
 
 function stageCompletion(d) {
@@ -902,36 +947,37 @@ function formatSSN(raw) {
 }
 
 // ─── Field helpers ───────────────────────────────────────────
-const Field = ({ label, required, children, full, hint }) => (
-  <div className={`tg-field${full ? ' tg-field-full' : ''}`}>
+const Field = ({ label, required, children, full, hint, error }) => (
+  <div className={`tg-field${full ? ' tg-field-full' : ''}${error ? ' tg-field-error' : ''}`}>
     <label className="tg-lbl">
       {label}{required && <span className="req">*</span>}
     </label>
     {children}
-    {hint && <div className="tg-field-hint">{hint}</div>}
+    {error && <div className="tg-field-err">This field is required</div>}
+    {hint && !error && <div className="tg-field-hint">{hint}</div>}
   </div>
 );
 
 // ─── Stage 1: Business Profile ───────────────────────────────
-const Stage1 = ({ d, u }) => (
+const Stage1 = ({ d, u, errors = {} }) => (
   <>
     <div className="tg-fields tg-fields-3">
-      <Field label="Legal Business Name" required full>
+      <Field label="Legal Business Name" required full error={errors.legalName}>
         <input className="tg-inp" placeholder="e.g. Sunbelt Coffee Company, LLC" value={d.legalName} onChange={e=>u('legalName',e.target.value)} />
       </Field>
       <Field label="Doing Business As (DBA)">
         <input className="tg-inp" placeholder="If different from legal name" value={d.dba} onChange={e=>u('dba',e.target.value)} />
       </Field>
-      <Field label="Business Structure" required>
+      <Field label="Business Structure" required error={errors.businessType}>
         <select className="tg-sel" value={d.businessType} onChange={e=>u('businessType',e.target.value)}>
           <option value="">Select…</option>
           {BUSINESS_TYPES.map(b => <option key={b.v} value={b.v}>{b.l}</option>)}
         </select>
       </Field>
-      <Field label="Federal EIN" required>
+      <Field label="Federal EIN" required error={errors.ein}>
         <input className="tg-inp" placeholder="12-3456789" value={d.ein} onChange={e=>u('ein',e.target.value)} />
       </Field>
-      <Field label="Industry" required>
+      <Field label="Industry" required error={errors.industry}>
         <select className="tg-sel" value={d.industry} onChange={e=>u('industry',e.target.value)}>
           <option value="">Select…</option>
           {INDUSTRIES.map(i => <option key={i} value={i}>{i}</option>)}
@@ -955,16 +1001,16 @@ const Stage1 = ({ d, u }) => (
     </div>
     <div className="tg-section-divider"><span className="lbl">Business address</span><span className="line"/></div>
     <div className="tg-fields tg-fields-addr">
-      <Field label="Street Address" required>
+      <Field label="Street Address" required error={errors.address1}>
         <input className="tg-inp" placeholder="1200 Main Street, Suite 200" value={d.address1} onChange={e=>u('address1',e.target.value)} />
       </Field>
-      <Field label="City" required>
+      <Field label="City" required error={errors.city}>
         <input className="tg-inp" placeholder="Atlanta" value={d.city} onChange={e=>u('city',e.target.value)} />
       </Field>
-      <Field label="State" required>
+      <Field label="State" required error={errors.state}>
         <input className="tg-inp" placeholder="GA" value={d.state} onChange={e=>u('state',e.target.value)} />
       </Field>
-      <Field label="ZIP" required>
+      <Field label="ZIP" required error={errors.zip}>
         <input className="tg-inp" placeholder="30301" value={d.zip} onChange={e=>u('zip',e.target.value)} />
       </Field>
     </div>
@@ -978,7 +1024,7 @@ const Stage1 = ({ d, u }) => (
 );
 
 // ─── Stage 2: Owners ─────────────────────────────────────────
-const OwnerFields = ({ d, u, prefix, label, onRemove }) => (
+const OwnerFields = ({ d, u, prefix, label, onRemove, errors = {} }) => (
   <div className="tg-owner-block">
     <div className="tg-section-divider">
       <span className="lbl">{label}</span>
@@ -986,22 +1032,22 @@ const OwnerFields = ({ d, u, prefix, label, onRemove }) => (
       {onRemove && <button className="tg-owner-remove" onClick={onRemove} type="button">Remove</button>}
     </div>
     <div className="tg-fields tg-fields-owner">
-      <Field label="First Name" required>
+      <Field label="First Name" required error={errors[`${prefix}FirstName`]}>
         <input className="tg-inp" placeholder="Jane" value={d[`${prefix}FirstName`]} onChange={e=>u(`${prefix}FirstName`,e.target.value)} />
       </Field>
-      <Field label="Last Name" required>
+      <Field label="Last Name" required error={errors[`${prefix}LastName`]}>
         <input className="tg-inp" placeholder="Rivera" value={d[`${prefix}LastName`]} onChange={e=>u(`${prefix}LastName`,e.target.value)} />
       </Field>
       <Field label="Title">
         <input className="tg-inp" placeholder="Owner / CEO" value={d[`${prefix}Title`]} onChange={e=>u(`${prefix}Title`,e.target.value)} />
       </Field>
-      <Field label="Ownership %" required>
+      <Field label="Ownership %" required error={errors[`${prefix}Ownership`]}>
         <input className="tg-inp" placeholder="100" value={d[`${prefix}Ownership`]} onChange={e=>u(`${prefix}Ownership`,e.target.value)} />
       </Field>
-      <Field label="Social Security Number" required>
+      <Field label="Social Security Number" required error={errors[`${prefix}Ssn`]}>
         <input className="tg-inp" placeholder="•••-••-••••" maxLength={11} value={d[`${prefix}Ssn`]} onChange={e=>u(`${prefix}Ssn`, formatSSN(e.target.value))} />
       </Field>
-      <Field label="Date of Birth" required>
+      <Field label="Date of Birth" required error={errors[`${prefix}Dob`]}>
         <input className="tg-inp" placeholder="MM / DD / YYYY" value={d[`${prefix}Dob`]} onChange={e=>u(`${prefix}Dob`,e.target.value)} />
       </Field>
       <Field label="Email">
@@ -1017,7 +1063,7 @@ const OwnerFields = ({ d, u, prefix, label, onRemove }) => (
   </div>
 );
 
-const Stage2 = ({ d, u }) => {
+const Stage2 = ({ d, u, errors = {} }) => {
   const o1 = parseFloat(d.owner1Ownership) || 0;
   const o2 = parseFloat(d.owner2Ownership) || 0;
   const needOwner2 = o1 > 0 && o1 < 100;
@@ -1033,12 +1079,12 @@ const Stage2 = ({ d, u }) => {
 
   return (
     <>
-      <OwnerFields d={d} u={u} prefix="owner1" label="Primary Owner" />
+      <OwnerFields d={d} u={u} prefix="owner1" label="Primary Owner" errors={errors} />
 
       {needOwner2 ? (
-        <OwnerFields d={d} u={u} prefix="owner2" label="Additional Owner (Required — total ownership under 100%)" />
+        <OwnerFields d={d} u={u} prefix="owner2" label="Additional Owner (Required — total ownership under 100%)" errors={errors} />
       ) : d.hasSecondOwner ? (
-        <OwnerFields d={d} u={u} prefix="owner2" label="Additional Owner" onRemove={() => { u('hasSecondOwner', false); u('hasThirdOwner', false); }} />
+        <OwnerFields d={d} u={u} prefix="owner2" label="Additional Owner" onRemove={() => { u('hasSecondOwner', false); u('hasThirdOwner', false); }} errors={errors} />
       ) : (
         <button className="tg-owner2-toggle" onClick={() => u('hasSecondOwner', true)}>
           <span className="plus">+</span>
@@ -1048,9 +1094,9 @@ const Stage2 = ({ d, u }) => {
 
       {d.hasSecondOwner && (
         needOwner3 ? (
-          <OwnerFields d={d} u={u} prefix="owner3" label="Third Owner (Required — total ownership still under 100%)" />
+          <OwnerFields d={d} u={u} prefix="owner3" label="Third Owner (Required — total ownership still under 100%)" errors={errors} />
         ) : d.hasThirdOwner ? (
-          <OwnerFields d={d} u={u} prefix="owner3" label="Third Owner" onRemove={() => u('hasThirdOwner', false)} />
+          <OwnerFields d={d} u={u} prefix="owner3" label="Third Owner" onRemove={() => u('hasThirdOwner', false)} errors={errors} />
         ) : (
           <button className="tg-owner2-toggle" onClick={() => u('hasThirdOwner', true)}>
             <span className="plus">+</span>
@@ -1095,7 +1141,7 @@ const RateMatchWidget = () => (
   </div>
 );
 
-const Stage3 = ({ d, u, uploadedFile, setUploadedFile }) => {
+const Stage3 = ({ d, u, uploadedFile, setUploadedFile, errors = {} }) => {
   const fileRef = useRef();
 
   const handleFile = (e) => {
@@ -1123,13 +1169,13 @@ const Stage3 = ({ d, u, uploadedFile, setUploadedFile }) => {
             {GROSS_SALES.map(v => <option key={v}>{v}</option>)}
           </select>
         </Field>
-        <Field label="Estimated Monthly Volume" required>
+        <Field label="Estimated Monthly Volume" required error={errors.monthlyVolume}>
           <select className="tg-sel" value={d.monthlyVolume} onChange={e=>u('monthlyVolume',e.target.value)}>
             <option value="">Select…</option>
             {PROCESSING_VOLUMES.map(v => <option key={v}>{v}</option>)}
           </select>
         </Field>
-        <Field label="Average Ticket" required>
+        <Field label="Average Ticket" required error={errors.avgTicket}>
           <select className="tg-sel" value={d.avgTicket} onChange={e=>u('avgTicket',e.target.value)}>
             <option value="">Select…</option>
             {TICKET_SIZES.map(v => <option key={v}>{v}</option>)}
@@ -1172,19 +1218,19 @@ const Stage3 = ({ d, u, uploadedFile, setUploadedFile }) => {
 };
 
 // ─── Stage 4: Banking ────────────────────────────────────────
-const Stage4 = ({ d, u }) => (
+const Stage4 = ({ d, u, errors = {} }) => (
   <>
     <div className="tg-fields tg-fields-3">
-      <Field label="Bank Name" required full>
+      <Field label="Bank Name" required full error={errors.bankName}>
         <input className="tg-inp" placeholder="Wells Fargo" value={d.bankName} onChange={e=>u('bankName',e.target.value)} />
       </Field>
-      <Field label="Routing Number" required>
+      <Field label="Routing Number" required error={errors.bankRoutingNumber}>
         <input className="tg-inp" placeholder="9 digits" maxLength={9} value={d.bankRoutingNumber} onChange={e=>u('bankRoutingNumber',e.target.value)} />
       </Field>
-      <Field label="Account Number" required>
+      <Field label="Account Number" required error={errors.bankAccountNumber}>
         <input className="tg-inp" placeholder="••••••••" value={d.bankAccountNumber} onChange={e=>u('bankAccountNumber',e.target.value)} />
       </Field>
-      <Field label="Account Type" required>
+      <Field label="Account Type" required error={errors.bankAccountType}>
         <select className="tg-sel" value={d.bankAccountType||''} onChange={e=>u('bankAccountType',e.target.value)}>
           <option value="">Select…</option>
           <option>Business checking</option>
@@ -1213,7 +1259,7 @@ const REQUIRED_DOCS = [
   { key: 'pg',  label: 'Program Guide & Terms',           url: 'assets/program-guide.pdf' },
 ];
 
-const DocReview = ({ reviewed, onChange }) => {
+const DocReview = ({ reviewed, onChange, error }) => {
   const [opened, setOpened] = useState({});
   const allOpened = REQUIRED_DOCS.every(doc => opened[doc.key]);
 
@@ -1223,7 +1269,7 @@ const DocReview = ({ reviewed, onChange }) => {
   };
 
   return (
-    <div className="va-docs">
+    <div className={`va-docs${error ? ' va-error' : ''}`}>
       <div className="va-docs-head">
         <span className="va-docs-label">Review your documents<span className="req">*</span></span>
       </div>
@@ -1418,7 +1464,7 @@ const SignatureType = ({ onChange }) => {
   );
 };
 
-const SignaturePad = ({ onChange }) => {
+const SignaturePad = ({ onChange, error }) => {
   const [mode, setMode] = useState('draw');
   const switchTo = (m) => {
     if (m === mode) return;
@@ -1426,7 +1472,7 @@ const SignaturePad = ({ onChange }) => {
     onChange(''); // reset when switching methods so only the active one counts
   };
   return (
-    <div className="va-sign">
+    <div className={`va-sign${error ? ' va-error' : ''}`}>
       <div className="va-sign-head">
         <span className="va-sign-label">Digital signature<span className="req">*</span></span>
         <div className="va-sign-tabs" role="tablist">
@@ -1448,7 +1494,7 @@ const ReviewRow = ({ label, value }) => (
   </div>
 );
 
-const Stage5 = ({ d, u, setStage }) => {
+const Stage5 = ({ d, u, setStage, errors = {} }) => {
   const businessTypeLabel = BUSINESS_TYPES.find(b => b.v === d.businessType)?.l;
   return (
     <>
@@ -1516,9 +1562,9 @@ const Stage5 = ({ d, u, setStage }) => {
           <ReviewRow label="Type" value={d.bankAccountType} />
         </div>
       </div>
-      <DocReview reviewed={d.docsReviewed} onChange={v => u('docsReviewed', v)} />
-      <SignaturePad onChange={v => u('signature', v)} />
-      <label className="va-consent">
+      <DocReview reviewed={d.docsReviewed} onChange={v => u('docsReviewed', v)} error={errors.docsReviewed} />
+      <SignaturePad onChange={v => u('signature', v)} error={errors.signature} />
+      <label className={`va-consent${errors.consent ? ' va-error' : ''}`}>
         <input type="checkbox" checked={d.consent} onChange={e=>u('consent',e.target.checked)} />
         <span className="va-consent-box">
           <svg width="11" height="11" viewBox="0 0 11 11" fill="none">
@@ -1852,14 +1898,43 @@ const SuccessScreen = ({ onRestart }) => {
 
 // ─── Main Application ────────────────────────────────────────
 const App = () => {
-  const { data, update, stage, setStage, reset } = useFormData();
+  const { data, update, stage, setStage, reset, errors, setErrors } = useFormData();
   const [uploadedFile, setUploadedFile] = useState(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState('');
+  const [stageError, setStageError] = useState('');
   const completion = stageCompletion(data);
 
+  // Navigate freely between stages (back / stepper) — clears any error state
+  const goToStage = (idx) => { setErrors({}); setStageError(''); setSubmitError(''); setStage(idx); };
+
+  // Validate the current stage before advancing
+  const handleContinue = () => {
+    const errs = validateStage(stage, data);
+    if (Object.keys(errs).length) {
+      setErrors(errs);
+      setStageError('Please complete the required fields highlighted below before continuing.');
+      scrollToFirstError();
+      return;
+    }
+    setErrors({});
+    setStageError('');
+    setStage(stage + 1);
+  };
+
   const handleSubmit = async () => {
-    if (!data.consent || !data.signature || !data.docsReviewed) return;
+    // Validate the final acknowledgements and highlight anything missing
+    const errs = {};
+    if (!data.docsReviewed) errs.docsReviewed = true;
+    if (!data.signature)    errs.signature = true;
+    if (!data.consent)      errs.consent = true;
+    if (Object.keys(errs).length) {
+      setErrors(errs);
+      setSubmitError('Please review the documents, add your signature, and agree to the terms before submitting.');
+      scrollToFirstError();
+      return;
+    }
+    setErrors({});
     setIsSubmitting(true);
     setSubmitError('');
     try {
@@ -1911,11 +1986,11 @@ const App = () => {
   const stageIdx = stage - 1;
 
   const renderStageBody = () => {
-    if (stage === 1) return <Stage1 d={data} u={update}/>;
-    if (stage === 2) return <Stage2 d={data} u={update}/>;
-    if (stage === 3) return <Stage3 d={data} u={update} uploadedFile={uploadedFile} setUploadedFile={setUploadedFile}/>;
-    if (stage === 4) return <Stage4 d={data} u={update}/>;
-    if (stage === 5) return <Stage5 d={data} u={update} setStage={setStage}/>;
+    if (stage === 1) return <Stage1 d={data} u={update} errors={errors}/>;
+    if (stage === 2) return <Stage2 d={data} u={update} errors={errors}/>;
+    if (stage === 3) return <Stage3 d={data} u={update} uploadedFile={uploadedFile} setUploadedFile={setUploadedFile} errors={errors}/>;
+    if (stage === 4) return <Stage4 d={data} u={update} errors={errors}/>;
+    if (stage === 5) return <Stage5 d={data} u={update} setStage={goToStage} errors={errors}/>;
   };
 
   return (
@@ -1931,7 +2006,7 @@ const App = () => {
             <button
               key={i}
               className={`vb-hstep${isActive ? ' vb-hstep-active' : ''}${isDone ? ' vb-hstep-done' : ''}`}
-              onClick={() => setStage(idx)}
+              onClick={() => goToStage(idx)}
             >
               <span className="vb-hstep-num">{isDone ? '✓' : idx}</span>
               <span className="vb-hstep-lbl">{s.title}</span>
@@ -1955,7 +2030,7 @@ const App = () => {
                 <button
                   key={i}
                   className={`vb-vstep${isActive ? ' vb-vstep-active' : ''}${isDone ? ' vb-vstep-done' : ''}`}
-                  onClick={() => setStage(idx)}
+                  onClick={() => goToStage(idx)}
                   aria-current={isActive ? 'step' : undefined}
                 >
                   <span className="vb-vstep-num">{isDone ? '✓' : idx}</span>
@@ -1984,6 +2059,7 @@ const App = () => {
             </div>
             <h2 className="vb-card-title">{stageQuestion(stage)}</h2>
             <p className="vb-card-sub">{stageDescription(stage)}</p>
+            {stageError && <div className="tg-error-banner">{stageError}</div>}
             <div className="vb-card-body">
               {renderStageBody()}
             </div>
@@ -1991,18 +2067,18 @@ const App = () => {
             <div className="vb-card-foot">
               <button
                 className="tg-btn tg-btn-ghost"
-                onClick={() => setStage(stage === 1 ? 0 : stage - 1)}
+                onClick={() => goToStage(stage === 1 ? 0 : stage - 1)}
                 disabled={isSubmitting}
               >← Back</button>
               <span/>
               {stage < 5 ? (
-                <button className="tg-btn tg-btn-primary" onClick={() => setStage(stage + 1)}>
+                <button className="tg-btn tg-btn-primary" onClick={handleContinue}>
                   Continue →
                 </button>
               ) : (
                 <button
                   className="tg-btn tg-btn-primary"
-                  disabled={!data.consent || !data.signature || !data.docsReviewed || isSubmitting}
+                  disabled={isSubmitting}
                   onClick={handleSubmit}
                 >
                   {isSubmitting ? 'Submitting…' : 'Submit application'}
