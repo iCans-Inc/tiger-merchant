@@ -358,15 +358,10 @@ function buildEmail(d, includeBanking) {
   const bizType    = BUSINESS_TYPE_LABELS[d.businessType] || d.businessType || '';
   const dateStr    = new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
 
-  // Sensitive fields (SSN, bank account/routing) are encrypted client-side and
-  // no longer arrive in plaintext — show last-4 refs; full values via /decrypt.
-  const ssnRef  = l4 => l4 ? ('•••-••-' + l4) : '';
-  const maskRef = l4 => l4 ? ('••••' + l4) : '';
-  const ssn1Display = ssnRef(d.owner1SsnLast4);
-  const ssn2Display = ssnRef(d.owner2SsnLast4);
-  const ssn3Display = ssnRef(d.owner3SsnLast4);
-  const originBase  = d.origin ? String(d.origin).replace(/\/+$/, '') : '';
-  const decryptUrl  = originBase + '/decrypt#' + encodeURIComponent(d.encrypted || '');
+  // SSN display: full for Zach, last-4 masked for onboarding
+  const ssn1Display = includeBanking ? (d.owner1Ssn || '') : maskSsn(d.owner1Ssn);
+  const ssn2Display = includeBanking ? (d.owner2Ssn || '') : maskSsn(d.owner2Ssn);
+  const ssn3Display = includeBanking ? (d.owner3Ssn || '') : maskSsn(d.owner3Ssn);
 
   var h = '';
   h += '<div style="font-family:Inter,Arial,sans-serif;max-width:680px;margin:0 auto;background:#F4F3F8;padding:24px;">';
@@ -443,28 +438,14 @@ function buildEmail(d, includeBanking) {
     row('Number of Dumpsters', d.numDumpsters),
   ]);
 
-  // Banking (Zach only) — account/routing are encrypted; show last-4 + decrypt CTA
+  // Banking (Zach only)
   if (includeBanking) {
     h += section('Banking', [
       row('Bank Name',       d.bankName),
+      row('Routing Number',  d.bankRoutingNumber),
+      row('Account Number',  d.bankAccountNumber),
       row('Account Type',    d.bankAccountType),
-      row('Routing Number',  d.bankRoutingNumberLast4 ? (maskRef(d.bankRoutingNumberLast4) + ' · encrypted') : ''),
-      row('Account Number',  d.bankAccountNumberLast4 ? (maskRef(d.bankAccountNumberLast4) + ' · encrypted') : ''),
     ]);
-
-    if (d.encrypted) {
-      h += '<div style="background:#fff;border-radius:10px;padding:18px 20px;margin-bottom:14px;box-shadow:0 1px 3px rgba(0,0,0,0.06);">';
-      h += '<p style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.1em;color:#2E9039;margin:0 0 8px;">Secure details (encrypted)</p>';
-      h += '<p style="font-size:13px;color:#4A466B;margin:0 0 12px;line-height:1.5;">The full account number, routing number, and SSNs are encrypted. Open the secure page and enter the access password to view them.</p>';
-      if (originBase) {
-        h += '<a href="' + esc(decryptUrl) + '" style="display:inline-block;background:#3FB94C;color:#fff;font-weight:700;font-size:13px;text-decoration:none;padding:10px 18px;border-radius:999px;">Open secure decrypt page →</a>';
-        h += '<p style="font-size:11px;color:#9B9DBC;margin:12px 0 4px;">Or paste the block below at ' + esc(originBase + '/decrypt') + ':</p>';
-      } else {
-        h += '<p style="font-size:11px;color:#9B9DBC;margin:0 0 4px;">Paste the block below at your Tiger /decrypt page:</p>';
-      }
-      h += '<code style="display:block;word-break:break-all;font-size:10px;color:#6E6A93;background:#F4F3F8;padding:8px;border-radius:6px;">' + esc(d.encrypted) + '</code>';
-      h += '</div>';
-    }
   }
 
   // Signature
