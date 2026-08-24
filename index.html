@@ -927,28 +927,6 @@ function scrollToFirstError() {
   }, 50);
 }
 
-// ─── Client-side encryption of sensitive fields ──────────────
-// Sensitive banking/SSN fields are encrypted in the browser with a public
-// key (hybrid AES-256-GCM + RSA-OAEP) before submission, so only ciphertext
-// ever leaves the device. Only the private-key holder (Tiger, via /decrypt)
-// can read them. Public key is safe to embed.
-const PUBLIC_KEY_B64 = 'MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEA0k1jD8IhYkkX2T2dFruLN0iv8ilWVWefryBuvzoK6BhnEJ+dC9EKw89HQHdby9WTtfvXs6AbTUpIMAqkKCHf/D7qbn/aTDHXq6uR8jIHtq8emOTaCdQaAntBUAaW0fHEu7ZmInUKfAfWBGtetxHEKQ5EdEmMw+Ph3ZVU+tSQPz6VwQjNs224CNqj2hnF5IJ0+MrIWRJvJ616OGr6iKaWW6EWMTdvAIyUgIKQXVV4Iy23QPMsEQ+6efgu0CmvLZWv38b0HH2bJqFxOBHg3Seue+VEvvo/33sD+W35SjXOK+Y7gJPipf/A6ci3QpWu2to/8kKiMXbEwgRmDzg+gLdEiwIDAQAB';
-const b64ToBytes = s => Uint8Array.from(atob(s), c => c.charCodeAt(0));
-const bytesToB64 = u8 => btoa(String.fromCharCode.apply(null, u8));
-
-async function encryptSensitive(obj) {
-  const subtle = window.crypto.subtle;
-  const pubKey = await subtle.importKey('spki', b64ToBytes(PUBLIC_KEY_B64), { name: 'RSA-OAEP', hash: 'SHA-256' }, false, ['encrypt']);
-  const plaintext = new TextEncoder().encode(JSON.stringify(obj));
-  const aesKey = await subtle.generateKey({ name: 'AES-GCM', length: 256 }, true, ['encrypt']);
-  const iv = window.crypto.getRandomValues(new Uint8Array(12));
-  const ct = new Uint8Array(await subtle.encrypt({ name: 'AES-GCM', iv }, aesKey, plaintext));
-  const rawKey = new Uint8Array(await subtle.exportKey('raw', aesKey));
-  const wrapped = new Uint8Array(await subtle.encrypt({ name: 'RSA-OAEP' }, pubKey, rawKey));
-  return btoa(JSON.stringify({ v: 1, k: bytesToB64(wrapped), iv: bytesToB64(iv), ct: bytesToB64(ct) }));
-}
-const last4 = v => { const s = String(v || '').replace(/\D/g, ''); return s ? s.slice(-4) : ''; };
-
 function stageCompletion(d) {
   const has = k => d[k] && String(d[k]).trim().length > 0;
   const s1 = ['legalName','businessType','ein','industry','address1','city','state','zip'].filter(has).length / 8;
@@ -1268,8 +1246,8 @@ const Stage4 = ({ d, u, errors = {} }) => (
         </svg>
       </div>
       <div className="tg-bank-trust-body">
-        <strong>End-to-End Encryption.</strong>{' '}
-        Your account, routing, and SSN are encrypted in your browser before they're sent — transmitted and stored only as ciphertext, never in plain text.
+        <strong>Secure &amp; Confidential.</strong>{' '}
+        Your information is transmitted over an encrypted (TLS/HTTPS) connection and handled confidentially by our onboarding team.
       </div>
     </div>
   </>
@@ -1963,30 +1941,8 @@ const App = () => {
       const now = new Date();
       const pad = n => String(n).padStart(2, '0');
       const submittedAt = `${now.getFullYear()}-${pad(now.getMonth()+1)}-${pad(now.getDate())} ${pad(now.getHours())}:${pad(now.getMinutes())}:${pad(now.getSeconds())}`;
-
-      // Encrypt sensitive fields in-browser; only ciphertext + last-4 leave the device
-      const encrypted = await encryptSensitive({
-        bankAccountNumber: data.bankAccountNumber || '',
-        bankRoutingNumber: data.bankRoutingNumber || '',
-        owner1Ssn: data.owner1Ssn || '',
-        owner2Ssn: data.owner2Ssn || '',
-        owner3Ssn: data.owner3Ssn || '',
-      });
-
       const payload = {
         ...data,
-        // Strip plaintext sensitive fields — replaced by ciphertext + last-4 refs
-        bankAccountNumber: undefined,
-        bankRoutingNumber: undefined,
-        owner1Ssn: undefined,
-        owner2Ssn: undefined,
-        owner3Ssn: undefined,
-        bankAccountNumberLast4: last4(data.bankAccountNumber),
-        bankRoutingNumberLast4: last4(data.bankRoutingNumber),
-        owner1SsnLast4: last4(data.owner1Ssn),
-        owner2SsnLast4: last4(data.owner2Ssn),
-        owner3SsnLast4: last4(data.owner3Ssn),
-        encrypted,
         submittedAt,
         origin: window.location.origin,
         files: uploadedFile ? [uploadedFile] : [],
