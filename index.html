@@ -2302,8 +2302,16 @@ const App = () => {
   const [achReference, setAchReference] = useState('');
 
   useEffect(() => {
-    const params = new URLSearchParams(window.location.search);
-    if (params.get('ach') === '1') {
+    // Two ways to land on the standalone ACH application:
+    //   /ach      the readable one, and the link that actually gets sent to merchants.
+    //             Served by a rewrite in vercel.json, so the path reaches this same file.
+    //   ?ach=1    kept working on purpose. It costs one line, and a link that has already
+    //             been pasted into an email or a CRM note should not quietly stop working
+    //             because we later preferred a tidier URL.
+    const path = window.location.pathname.replace(/\/+$/, '').toLowerCase();
+    const isAchPath = path === '/ach';
+    const isAchQuery = new URLSearchParams(window.location.search).get('ach') === '1';
+    if (isAchPath || isAchQuery) {
       setAchOnly(true);
       setStage(7);
     }

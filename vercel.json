@@ -1,6 +1,12 @@
 {
   "cleanUrls": true,
   "trailingSlash": false,
+  "rewrites": [
+    {
+      "source": "/ach",
+      "destination": "/index.html"
+    }
+  ],
   "functions": {
     "api/submit.js": {
       "maxDuration": 30
