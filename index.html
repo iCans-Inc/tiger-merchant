@@ -1014,7 +1014,12 @@ const EMPTY_FORM = {
   consent: false,
 
   // ── Part 2: ACH activation ──
-  achMonthlyVolume:'', achAvgDebit:'', achUseCase:'',
+  // Five answers, not the three the design frames show. The frames omit the monthly count
+  // and the maximum amount, but Tiger asked for both in writing ("Average # of Monthly ACH,
+  // Maximum Amount"), and underwriting needs them to set a per-transaction ceiling rather
+  // than infer one from a monthly band. The frames are the layout; their list is the
+  // requirement, so both are collected.
+  achMonthlyVolume:'', achAvgDebit:'', achMonthlyCount:'', achMaximumAmount:'', achUseCase:'',
   achDocs: {},            // { [docKey]: { name, type, data } }
   achAuthorized: false,   // the NACHA origination authorization
   // Standalone ACH only. A merchant who already has Tiger comes in without a card
@@ -1076,7 +1081,7 @@ function validateStage(stage, d) {
 // would mean the card validator answering a question it has no business answering.
 function requiredAchFields(step, achOnly) {
   if (step !== 1) return [];
-  const usage = ['achMonthlyVolume', 'achAvgDebit', 'achUseCase'];
+  const usage = ['achMonthlyVolume', 'achAvgDebit', 'achMonthlyCount', 'achMaximumAmount', 'achUseCase'];
   return achOnly ? ['achBusinessName', 'achEin', 'achContactEmail'].concat(usage) : usage;
 }
 
@@ -1816,6 +1821,18 @@ const AchUsageStep = ({ d, u, achOnly, errors = {} }) => (
           {TICKET_SIZES.map(v => <option key={v}>{v}</option>)}
         </select>
       </Field>
+      {/* The two Tiger asked for in writing that the design frames leave out. A count and a
+          ceiling are both exact figures a merchant can state, so these are typed rather than
+          banded: banding a maximum would defeat the point of asking for it. The card
+          application's own "Highest Single Ticket" is the pattern being followed. */}
+      <Field label="Average # of Monthly ACH" required error={errors.achMonthlyCount} hint="Roughly how many ACH transactions you run in a typical month.">
+        <input className="tg-inp" type="number" min="0" step="1" placeholder="e.g. 40"
+               value={d.achMonthlyCount} onChange={e=>u('achMonthlyCount',e.target.value)} />
+      </Field>
+      <Field label="Maximum Amount" required error={errors.achMaximumAmount} hint="The largest single ACH debit you expect to run.">
+        <input className="tg-inp" placeholder="e.g. $5,000"
+               value={d.achMaximumAmount} onChange={e=>u('achMaximumAmount',e.target.value)} />
+      </Field>
       <Field label="Primary Use Case" required error={errors.achUseCase}>
         <select className="tg-sel" value={d.achUseCase} onChange={e=>u('achUseCase',e.target.value)}>
           <option value="">Select…</option>
@@ -2401,6 +2418,8 @@ const App = () => {
         contactEmail: identity.email,
         achMonthlyVolume: data.achMonthlyVolume,
         achAvgDebit: data.achAvgDebit,
+        achMonthlyCount: data.achMonthlyCount,
+        achMaximumAmount: data.achMaximumAmount,
         achUseCase: data.achUseCase,
         achAuthorized: !!data.achAuthorized,
         files: ACH_REQUIRED_DOCS
