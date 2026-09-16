@@ -149,6 +149,27 @@ function doPost(e) {
   try {
     const data = JSON.parse(e.postData.contents);
 
+    // ── Part 2: ACH activation ──
+    // Routed to its own handlers rather than folded into the card path. The ACH payload is a
+    // different shape (three usage answers and four documents, no owners, no banking, no
+    // signature), and the card sheet's column layout is positional, so writing ACH into it
+    // would either shift every column or leave most of the row blank.
+    if (data.applicationType === 'ach') {
+      var achSheetError = null;
+      var achEmailError = null;
+      try { saveAchToSheet(data); } catch (err) {
+        achSheetError = err.toString();
+        Logger.log('ACH sheet error: ' + achSheetError);
+      }
+      try { sendAchEmails(data); } catch (err) {
+        achEmailError = err.toString();
+        Logger.log('ACH email error: ' + achEmailError);
+      }
+      if (achSheetError) return ok({ success: false, error: 'Sheet: ' + achSheetError });
+      if (achEmailError) return ok({ success: true, emailError: achEmailError });
+      return ok({ success: true });
+    }
+
     try {
       saveToSheet(data);
     } catch (err) {
@@ -237,6 +258,86 @@ function saveToSheet(d) {
     d.numDumpsters          || '',                                 // AB Number of Dumpsters
     d.signature ? 'Signed ✓' : '',                                 // AC Signature captured
   ]);
+}
+
+// ── Part 2: ACH activation ───────────────────────────────────────────────────
+// Its own tab, created on first use. Keeping ACH out of the card tab is what lets the card
+// layout above stay positional and untouched.
+function saveAchToSheet(d) {
+  const book  = SpreadsheetApp.openById(SHEET_ID);
+  var   sheet = book.getSheetByName('ACH');
+  if (!sheet) {
+    sheet = book.insertSheet('ACH');
+    sheet.appendRow([
+      'Date Added', 'Entry', 'Business Name', 'EIN', 'Contact Email',
+      'Card Reference', 'Est. Monthly ACH Volume', 'Average Debit Amount',
+      'Primary Use Case', 'NACHA Authorized', 'Documents Received',
+    ]);
+  }
+
+  const docNames = (d.files || []).map(function(f) { return f.docLabel || f.name; });
+
+  sheet.appendRow([
+    d.submittedAt        || new Date().toLocaleString('en-US'),
+    d.achOnly ? 'Standalone (existing merchant)' : 'Part 2 (with card application)',
+    d.legalName          || '',
+    d.ein                || '',
+    d.contactEmail       || '',
+    d.cardReference      || '',
+    d.achMonthlyVolume   || '',
+    d.achAvgDebit        || '',
+    d.achUseCase         || '',
+    d.achAuthorized ? 'Yes ✓' : '',
+    docNames.length + ' of 4: ' + docNames.join(', '),
+  ]);
+}
+
+function sendAchEmails(d) {
+  const attachments = buildAttachments(d.files || []);
+  const who         = d.legalName || 'Unknown';
+  const subject     = 'ACH Activation – ' + who + (d.cardReference ? ' (' + d.cardReference + ')' : '');
+  const opts        = { name: FROM_NAME, attachments: attachments };
+
+  // Both recipients get the same body. Unlike the card application there is nothing to mask:
+  // the ACH answers carry no SSN and no bank numbers. The account details are inside the
+  // attached bank letter, which is exactly why the documents ride as attachments and are not
+  // transcribed into the email or the sheet.
+  const html = buildAchEmail(d);
+
+  GmailApp.sendEmail(ONBOARDING_EMAIL, subject, '', Object.assign({}, opts, { htmlBody: html }));
+  GmailApp.sendEmail(ZACH_EMAIL,       subject, '', Object.assign({}, opts, { htmlBody: html }));
+}
+
+function buildAchEmail(d) {
+  const row = function(label, value) {
+    return '<tr><td style="padding:6px 12px 6px 0;color:#6E6A93;font:13px Arial">' + label +
+           '</td><td style="padding:6px 0;color:#1A1830;font:600 13px Arial">' + (value || 'Not provided') + '</td></tr>';
+  };
+  const docs = (d.files || []).map(function(f) {
+    return '<li style="color:#1A1830;font:13px Arial">' + (f.docLabel || f.name) + '</li>';
+  }).join('');
+
+  return '' +
+    '<div style="font:14px Arial;color:#1A1830">' +
+      '<h2 style="margin:0 0 4px">ACH Activation</h2>' +
+      '<p style="margin:0 0 16px;color:#6E6A93;font:13px Arial">' +
+        (d.achOnly
+          ? 'Standalone request from a merchant who already processes cards with Tiger.'
+          : 'Part 2, submitted alongside a new card application.') +
+      '</p>' +
+      '<table cellpadding="0" cellspacing="0">' +
+        row('Business', d.legalName) +
+        row('EIN', d.ein) +
+        row('Contact', d.contactEmail) +
+        row('Card reference', d.cardReference) +
+        row('Est. monthly ACH volume', d.achMonthlyVolume) +
+        row('Average debit amount', d.achAvgDebit) +
+        row('Primary use case', d.achUseCase) +
+        row('NACHA authorization', d.achAuthorized ? 'Authorized ✓' : 'NOT AUTHORIZED') +
+      '</table>' +
+      '<h3 style="margin:18px 0 6px">Documents attached</h3>' +
+      '<ul style="margin:0;padding-left:18px">' + (docs || '<li>None</li>') + '</ul>' +
+    '</div>';
 }
 
 // ── Emails ────────────────────────────────────────────────────────────────────

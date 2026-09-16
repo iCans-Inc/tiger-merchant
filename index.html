@@ -183,6 +183,105 @@ a{color:inherit;text-decoration:none;}
 .tg-rate-card-upload em { display: block; font-size: 11px; color: var(--text-muted); font-style: normal; margin-top: 1px; }
 .tg-file-chosen { font-size: 12px; color: var(--brand-deep); font-weight: 600; margin-top: 4px; }
 
+/* ─── Part 2: ACH activation ─────────────────────────────── */
+.tg-ach-lede { font-size: 13px; color: var(--text-muted); margin: 0 0 14px; }
+
+.tg-ach-note {
+  display: flex; gap: 10px; align-items: flex-start;
+  margin-top: 16px; padding: 12px 14px;
+  background: var(--ink-50); border: 1px solid var(--line); border-radius: 10px;
+}
+.tg-ach-note-icon { color: var(--ink); flex: 0 0 auto; margin-top: 1px; }
+.tg-ach-note strong { display: block; font-size: 13px; color: var(--text); }
+.tg-ach-note em { display: block; font-style: normal; font-size: 12px; color: var(--text-muted); margin-top: 2px; }
+
+.tg-ach-doc-head {
+  display: flex; justify-content: space-between; align-items: center;
+  font-size: 11px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase;
+  color: var(--ink-500); margin-bottom: 8px;
+}
+.tg-ach-doc-count {
+  background: var(--ink-50); border-radius: 999px; padding: 3px 10px;
+  letter-spacing: 0; text-transform: none; font-weight: 600; color: var(--ink);
+}
+.tg-ach-docs { display: grid; gap: 8px; }
+.tg-ach-doc {
+  display: grid; grid-template-columns: 28px 1fr auto; gap: 12px; align-items: center;
+  padding: 12px 14px; border: 1px solid var(--line-strong); border-radius: 10px;
+  background: var(--surface);
+}
+.tg-ach-doc.is-done { border-color: var(--brand); background: var(--brand-50); }
+.tg-ach-doc-num {
+  width: 28px; height: 28px; border-radius: 8px;
+  display: grid; place-items: center;
+  font-size: 12px; font-weight: 700;
+  background: var(--ink-50); color: var(--ink-500);
+}
+.tg-ach-doc.is-done .tg-ach-doc-num { background: var(--brand); color: #fff; }
+.tg-ach-doc-text strong { display: block; font-size: 13px; color: var(--text); }
+.tg-ach-doc-text em { display: block; font-style: normal; font-size: 12px; color: var(--text-muted); margin-top: 2px; }
+.tg-ach-doc-btn {
+  border: 1px solid var(--line-strong); background: var(--surface);
+  border-radius: 8px; padding: 7px 14px; font-size: 12px; font-weight: 600;
+  color: var(--ink); cursor: pointer;
+}
+.tg-ach-doc-btn:hover { border-color: var(--brand); color: var(--brand-deep); }
+
+.tg-ach-auth {
+  display: flex; gap: 10px; align-items: flex-start;
+  margin-top: 16px; padding: 14px;
+  background: var(--brand-50); border: 1px solid var(--brand-100); border-radius: 10px;
+  font-size: 12px; line-height: 1.5; color: var(--text); cursor: pointer;
+}
+.tg-ach-auth input { margin-top: 2px; flex: 0 0 auto; }
+
+/* The Part 2 offer on the card confirmation. Deliberately the loudest thing on that screen
+   after the confirmation itself, but still clearly optional. */
+.tg-ach-teaser {
+  margin: 28px auto 0; max-width: 560px; text-align: left;
+  padding: 22px 24px; border-radius: 16px;
+  background: linear-gradient(135deg, var(--ink) 0%, #3C3D69 100%);
+  color: #fff; box-shadow: var(--shadow-lg);
+}
+.tg-ach-teaser-eyebrow {
+  display: inline-block; font-size: 10px; font-weight: 800;
+  letter-spacing: .12em; text-transform: uppercase; color: var(--tiger);
+  margin-bottom: 6px;
+}
+.tg-ach-teaser h2 { margin: 0 0 6px; font-size: 26px; line-height: 1.15; color: #fff; }
+.tg-ach-teaser > p { margin: 0 0 14px; font-size: 13px; line-height: 1.5; color: rgba(255,255,255,0.78); }
+.tg-ach-teaser-badges { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 16px; }
+.tg-ach-teaser-badges span {
+  background: rgba(255,255,255,0.12); border-radius: 999px;
+  padding: 5px 12px; font-size: 11px; color: rgba(255,255,255,0.85);
+}
+.tg-ach-teaser-badges strong { color: var(--brand); }
+.tg-ach-teaser-cta {
+  border: 0; border-radius: 10px; cursor: pointer;
+  background: var(--tiger); color: #fff;
+  padding: 12px 22px; font-size: 14px; font-weight: 700;
+}
+.tg-ach-teaser-cta:hover { background: var(--tiger-deep); }
+.tg-ach-teaser-note {
+  display: block; margin-top: 10px; font-style: normal;
+  font-size: 11px; color: rgba(255,255,255,0.55);
+}
+
+.tg-ach-pricing {
+  display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px;
+  margin: 22px auto 0; max-width: 560px;
+}
+.tg-ach-pricing > div {
+  border: 1px solid var(--line); border-radius: 12px;
+  padding: 14px; background: var(--surface); text-align: left;
+}
+.tg-ach-pricing span {
+  display: block; font-size: 10px; font-weight: 700;
+  letter-spacing: .08em; text-transform: uppercase; color: var(--ink-500);
+}
+.tg-ach-pricing strong { display: block; font-size: 15px; color: var(--text); margin-top: 4px; }
+.tg-ach-pricing em { display: block; font-style: normal; font-size: 11px; color: var(--text-muted); margin-top: 2px; }
+
 /* Bank trust notice */
 .tg-bank-trust {
   display: flex; align-items: flex-start; gap: 12px;
@@ -803,6 +902,12 @@ a{color:inherit;text-decoration:none;}
   .vb-card-foot > span { display: none; }
   .vb-card-foot .tg-btn { flex: 1; justify-content: center; }
 
+  .tg-ach-teaser { padding: 20px 18px; }
+  .tg-ach-teaser h2 { font-size: 22px; }
+  .tg-ach-teaser-badges { gap: 6px; }
+  .tg-ach-doc { grid-template-columns: 28px 1fr; row-gap: 10px; }
+  .tg-ach-doc-btn { grid-column: 2; justify-self: start; }
+  .tg-ach-pricing { grid-template-columns: 1fr; }
   .tg-success { padding: 24px 16px; }
   .tg-success h1 { font-size: 22px; }
   .tg-success p { font-size: 13px; }
@@ -848,6 +953,34 @@ const GROSS_SALES = [
 const TICKET_SIZES = ['< $25','$25 – $100','$100 – $500','$500 – $2,500','$2,500+'];
 const WHERE_TO_SEND = ['Business Address','Owner Home Address','Email Only'];
 
+// ─── Part 2: ACH activation ──────────────────────────────────
+// The volume and debit dropdowns deliberately REUSE the card lists above rather than
+// declaring their own. PROCESSING_VOLUMES already reads '$50k – $250k' and TICKET_SIZES
+// already reads '$500 – $2,500', which are exactly the values the ACH design shows selected,
+// so a merchant answering both halves of the application sees one vocabulary and the two
+// halves cannot drift apart when someone edits a band.
+const ACH_USE_CASES = [
+  'Recurring subscriptions / memberships',
+  'One-time invoices',
+  'Deposits and prepayments',
+  'A mix of the above',
+];
+
+const ACH_STEPS = [
+  { eyebrow: 'Step 1', title: "How You'll Use ACH" },
+  { eyebrow: 'Step 2', title: 'Required Documents' },
+];
+
+// The four files underwriting needs before it can price ACH. Unlike the card application's
+// optional rate-card upload, every one of these is REQUIRED, which is why they carry their
+// own completion count in the UI.
+const ACH_REQUIRED_DOCS = [
+  { key: 'bankStatements', label: 'Two Months of Bank Statements', hint: 'Most recent two statements for the settlement account.' },
+  { key: 'driversLicense', label: "Owner's Driver's License",      hint: 'Front image for each owner with 25%+ stake.' },
+  { key: 'bankLetter',     label: 'Bank Letter or Voided Check',   hint: 'Confirms the account name, routing, and account number.' },
+  { key: 'articles',       label: 'Articles of Incorporation',     hint: 'Formation paperwork filed with your state.' },
+];
+
 const STAGES = [
   { eyebrow: 'Stage 1', title: 'Business Profile' },
   { eyebrow: 'Stage 2', title: 'Owner & Control' },
@@ -879,6 +1012,16 @@ const EMPTY_FORM = {
   signature: '',
   docsReviewed: false,
   consent: false,
+
+  // ── Part 2: ACH activation ──
+  achMonthlyVolume:'', achAvgDebit:'', achUseCase:'',
+  achDocs: {},            // { [docKey]: { name, type, data } }
+  achAuthorized: false,   // the NACHA origination authorization
+  // Standalone ACH only. A merchant who already has Tiger comes in without a card
+  // application in the session, so there is nothing to read the business identity from and
+  // they have to state it here. In the Part 2 path these stay blank and the card answers are
+  // used instead, which is what `achIdentity()` resolves.
+  achBusinessName:'', achEin:'', achContactEmail:'', achExistingReference:'',
 };
 
 function useFormData() {
@@ -886,7 +1029,13 @@ function useFormData() {
   const [stage, setStage] = useState(0);
   const [errors, setErrors] = useState({});
   const update = useCallback((k, v) => {
-    setData(d => ({ ...d, [k]: v }));
+    // `v` may be a FUNCTION of the previous value, not just a value. That matters for any
+    // field updated from an async callback: the ACH document uploads each complete in their
+    // own FileReader callback, and if they computed the next object from the value captured
+    // at render time, four near-simultaneous uploads would all spread the same stale object
+    // and only the last would survive. Losing an underwriting document silently is the worst
+    // way for that to fail, so the previous value is read here, inside the state updater.
+    setData(d => ({ ...d, [k]: typeof v === 'function' ? v(d[k]) : v }));
     // Clear a field's error as soon as the user edits it
     setErrors(e => {
       if (!e[k]) return e;
@@ -920,6 +1069,52 @@ function validateStage(stage, d) {
   });
   return errs;
 }
+// ── Part 2: ACH validation ──
+// Deliberately its OWN functions rather than more cases bolted onto the card switch above.
+// The ACH steps are a separate two-step wizard with their own numbering, and the standalone
+// entry requires business-identity fields that the Part 2 entry does not, so folding them in
+// would mean the card validator answering a question it has no business answering.
+function requiredAchFields(step, achOnly) {
+  if (step !== 1) return [];
+  const usage = ['achMonthlyVolume', 'achAvgDebit', 'achUseCase'];
+  return achOnly ? ['achBusinessName', 'achEin', 'achContactEmail'].concat(usage) : usage;
+}
+
+function validateAchStep(step, d, achOnly) {
+  const errs = {};
+  requiredAchFields(step, achOnly).forEach(k => {
+    if (!d[k] || !String(d[k]).trim()) errs[k] = true;
+  });
+  if (step === 2) {
+    // All four, every time. Underwriting cannot price ACH on a partial set, so a missing
+    // document is an error rather than a warning.
+    ACH_REQUIRED_DOCS.forEach(doc => {
+      if (!d.achDocs || !d.achDocs[doc.key]) errs[doc.key] = true;
+    });
+    if (!d.achAuthorized) errs.achAuthorized = true;
+  }
+  return errs;
+}
+
+// Who the ACH application is FOR. Part 2 inherits what the card application already asked;
+// standalone has no card application in the session and states its own. One function answers
+// it so the submit payload and the on-screen summary can never disagree.
+function achIdentity(d, achOnly) {
+  return achOnly
+    ? {
+        legalName: d.achBusinessName,
+        ein: d.achEin,
+        email: d.achContactEmail,
+        existingReference: d.achExistingReference || '',
+      }
+    : {
+        legalName: d.legalName,
+        ein: d.ein,
+        email: d.owner1Email,
+        existingReference: '',
+      };
+}
+
 function scrollToFirstError() {
   setTimeout(() => {
     const el = document.querySelector('.tg-field-error, .va-error');
@@ -1579,6 +1774,156 @@ const Stage5 = ({ d, u, setStage, errors = {} }) => {
   );
 };
 
+// ─── Part 2 · Step 1: How you'll use ACH ─────────────────────
+const AchUsageStep = ({ d, u, achOnly, errors = {} }) => (
+  <>
+    {achOnly && (
+      <>
+        {/* Standalone only. A merchant who already has Tiger arrives without a card
+            application in this session, so there is nothing to read the business from. */}
+        <p className="tg-ach-lede">
+          You already process cards with Tiger. Tell us which business this is for and we'll add ACH to it.
+        </p>
+        <div className="tg-fields tg-fields-3">
+          <Field label="Legal Business Name" required error={errors.achBusinessName}>
+            <input className="tg-inp" value={d.achBusinessName} onChange={e=>u('achBusinessName',e.target.value)} />
+          </Field>
+          <Field label="EIN" required error={errors.achEin}>
+            <input className="tg-inp" placeholder="12-3456789" value={d.achEin} onChange={e=>u('achEin',e.target.value)} />
+          </Field>
+          <Field label="Contact Email" required error={errors.achContactEmail}>
+            <input className="tg-inp" type="email" value={d.achContactEmail} onChange={e=>u('achContactEmail',e.target.value)} />
+          </Field>
+          <Field label="Existing Tiger Reference (Optional)" full hint="If you have your merchant or application reference to hand, it speeds up matching.">
+            <input className="tg-inp" placeholder="e.g. TGR-08471-A" value={d.achExistingReference} onChange={e=>u('achExistingReference',e.target.value)} />
+          </Field>
+        </div>
+      </>
+    )}
+
+    <p className="tg-ach-lede">A few details so underwriting can set the right ACH limits for your business.</p>
+
+    <div className="tg-fields tg-fields-3">
+      <Field label="Estimated Monthly ACH Volume" required error={errors.achMonthlyVolume}>
+        <select className="tg-sel" value={d.achMonthlyVolume} onChange={e=>u('achMonthlyVolume',e.target.value)}>
+          <option value="">Select…</option>
+          {PROCESSING_VOLUMES.map(v => <option key={v}>{v}</option>)}
+        </select>
+      </Field>
+      <Field label="Average Debit Amount" required error={errors.achAvgDebit}>
+        <select className="tg-sel" value={d.achAvgDebit} onChange={e=>u('achAvgDebit',e.target.value)}>
+          <option value="">Select…</option>
+          {TICKET_SIZES.map(v => <option key={v}>{v}</option>)}
+        </select>
+      </Field>
+      <Field label="Primary Use Case" required error={errors.achUseCase}>
+        <select className="tg-sel" value={d.achUseCase} onChange={e=>u('achUseCase',e.target.value)}>
+          <option value="">Select…</option>
+          {ACH_USE_CASES.map(v => <option key={v}>{v}</option>)}
+        </select>
+      </Field>
+    </div>
+
+    <div className="tg-ach-note">
+      <span className="tg-ach-note-icon" aria-hidden="true">
+        <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round">
+          <circle cx="8" cy="8" r="6.5"/><path d="M8 7.5v4M8 4.8v.6"/>
+        </svg>
+      </span>
+      <span>
+        <strong>ACH settles on a different clock than cards.</strong>
+        <em>Debits clear in 3 business days. Your card funding stays next-day, the two run independently.</em>
+      </span>
+    </div>
+  </>
+);
+
+// ─── Part 2 · Step 2: Required documents ─────────────────────
+const AchDocRow = ({ doc, index, file, onPick, error }) => {
+  const ref = useRef();
+  const handle = (e) => {
+    const f = e.target.files[0];
+    if (!f) return;
+    if (f.size > 7 * 1024 * 1024) {
+      alert('File is too large. Please upload a file smaller than 7 MB.');
+      return;
+    }
+    const reader = new FileReader();
+    reader.onload = (ev) => onPick(doc.key, { name: f.name, type: f.type, data: ev.target.result.split(',')[1] });
+    reader.readAsDataURL(f);
+  };
+  return (
+    <div className={'tg-ach-doc' + (file ? ' is-done' : '') + (error ? ' tg-field-error' : '')}>
+      <span className="tg-ach-doc-num" aria-hidden="true">
+        {file ? '✓' : String(index + 1).padStart(2, '0')}
+      </span>
+      <span className="tg-ach-doc-text">
+        <strong>{doc.label}</strong>
+        <em>{file ? file.name : doc.hint}</em>
+      </span>
+      <input ref={ref} type="file" accept=".pdf,.png,.jpg,.jpeg" hidden onChange={handle}/>
+      <button type="button" className="tg-ach-doc-btn" onClick={() => ref.current.click()}>
+        {file ? 'Replace' : 'Upload'}
+      </button>
+    </div>
+  );
+};
+
+const AchDocumentsStep = ({ d, u, errors = {} }) => {
+  const docs = d.achDocs || {};
+  const done = ACH_REQUIRED_DOCS.filter(doc => docs[doc.key]).length;
+  // Functional update, never a spread of the render-time `docs`. Each upload resolves in its
+  // own FileReader callback, so several can land between renders; spreading the captured
+  // object would let the last one silently overwrite the rest.
+  const pick = (key, file) => u('achDocs', prev => ({ ...(prev || {}), [key]: file }));
+
+  return (
+    <>
+      <p className="tg-ach-lede">Four documents, and your ACH application is complete.</p>
+
+      <div className="tg-ach-doc-head">
+        <span>Required for ACH underwriting</span>
+        <span className="tg-ach-doc-count">{done} of {ACH_REQUIRED_DOCS.length} uploaded</span>
+      </div>
+
+      <div className="tg-ach-docs">
+        {ACH_REQUIRED_DOCS.map((doc, i) => (
+          <AchDocRow key={doc.key} doc={doc} index={i} file={docs[doc.key]} onPick={pick} error={errors[doc.key]}/>
+        ))}
+      </div>
+
+      {/* The NACHA authorization. This is a legal attestation, not a nicety: without it the
+          processor cannot originate debits on the merchant's behalf. */}
+      <label className={'tg-ach-auth' + (errors.achAuthorized ? ' tg-field-error' : '')}>
+        <input type="checkbox" checked={!!d.achAuthorized} onChange={e=>u('achAuthorized', e.target.checked)}/>
+        <span>
+          I authorize Tiger Payments to originate ACH debits and credits on behalf of my business,
+          and I agree to the <strong>NACHA Operating Rules</strong> and the <strong>ACH Origination Agreement</strong>.
+        </span>
+      </label>
+    </>
+  );
+};
+
+// ─── Part 2: ACH activated ───────────────────────────────────
+const AchSuccessScreen = ({ reference, achOnly, onRestart }) => (
+  <div className="tg-success">
+    <div className="tg-success-mark"><PawApprovedMark/></div>
+    <h1>ACH Activated!</h1>
+    <p>
+      {reference ? <>Reference <strong>{reference}</strong> · </> : null}
+      All four documents are in. We'll email your ACH decision within 3 business days
+      {achOnly ? '.' : ', right alongside your card approval.'}
+    </p>
+    <div className="tg-ach-pricing">
+      <div><span>ACH</span><strong>1% per transaction</strong><em>3-day settlement</em></div>
+      <div><span>Card Processing</span><strong>2.99% flat</strong><em>Next-day funding</em></div>
+      <div><span>Monthly</span><strong>$20 · both included</strong><em>No contracts</em></div>
+    </div>
+    <button className="tg-restart" onClick={onRestart}>Start a new application</button>
+  </div>
+);
+
 // ─── Header ──────────────────────────────────────────────────
 const Header = () => (
   <div className="tg-hdr">
@@ -1865,7 +2210,7 @@ const PricingRow = ({ headline, sub }) => (
 );
 
 // ─── Success Screen ──────────────────────────────────────────
-const SuccessScreen = ({ onRestart }) => {
+const SuccessScreen = ({ onRestart, reference, onActivateAch, achDone }) => {
   const colors = ['#3FB94C','#F47A1F','#494A7D','#B6F3BF','#FFD16C'];
   const pieces = Array.from({length: 60}, (_, i) => ({
     left: Math.random() * 100,
@@ -1889,8 +2234,31 @@ const SuccessScreen = ({ onRestart }) => {
         <PawApprovedMark/>
       </div>
       <h1>Application Submitted!</h1>
-      <p>We'll email you within 3 business days with your underwriting decision.</p>
+      <p>
+        {reference ? <>Reference <strong>{reference}</strong> · </> : null}
+        We'll email you within 3 business days with your underwriting decision.
+      </p>
       <FundingTimeline/>
+
+      {/* Part 2. Offered here and only here, because this is the moment the merchant has
+          just finished and is most likely to add ACH while the details are fresh. It is
+          OPTIONAL: the card application is complete without it, so nothing about this panel
+          may read as an outstanding task. Hidden once ACH is already in. */}
+      {!achDone && (
+        <div className="tg-ach-teaser">
+          <span className="tg-ach-teaser-eyebrow">Part 2 · One more step</span>
+          <h2>Want to accept ACH too?</h2>
+          <p>Pull payments straight from a customer's bank account, ideal for recurring billing and large invoices where card fees add up.</p>
+          <div className="tg-ach-teaser-badges">
+            <span><strong>1%</strong> per transaction</span>
+            <span><strong>No</strong> hidden fees</span>
+            <span><strong>4</strong> documents to upload</span>
+          </div>
+          <button type="button" className="tg-ach-teaser-cta" onClick={onActivateAch}>Activate ACH →</button>
+          <em className="tg-ach-teaser-note">About 3 minutes · underwritten together</em>
+        </div>
+      )}
+
       <button className="tg-restart" onClick={onRestart}>Start a new application</button>
     </div>
   );
@@ -1904,6 +2272,25 @@ const App = () => {
   const [submitError, setSubmitError] = useState('');
   const [stageError, setStageError] = useState('');
   const completion = stageCompletion(data);
+
+  // ── Part 2: ACH activation ──
+  // `achOnly` is the STANDALONE entry: a merchant who already has Tiger, arriving at ?ach=1
+  // without a card application in this session. It is the difference between "add ACH to the
+  // application you just sent" and "add ACH to the account you already have", and it changes
+  // which fields are required and what the confirmation can promise.
+  const [achOnly, setAchOnly] = useState(false);
+  const [achDone, setAchDone] = useState(false);
+  const [isSubmittingAch, setIsSubmittingAch] = useState(false);
+  const [cardReference, setCardReference] = useState('');
+  const [achReference, setAchReference] = useState('');
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    if (params.get('ach') === '1') {
+      setAchOnly(true);
+      setStage(7);
+    }
+  }, []);
 
   // Navigate freely between stages (back / stepper) — clears any error state
   const goToStage = (idx) => { setErrors({}); setStageError(''); setSubmitError(''); setStage(idx); };
@@ -1958,10 +2345,87 @@ const App = () => {
         setIsSubmitting(false);
         return;
       }
+      // The reference is issued upstream, never minted here. If the backend does not return
+      // one the confirmation simply omits it rather than inventing something that would not
+      // match what the merchant is told by email.
+      if (json.reference) setCardReference(json.reference);
       setStage(6);
     } catch (err) {
       setSubmitError('Network error — please check your connection and try again.');
       setIsSubmitting(false);
+    }
+  };
+
+  // ── Part 2: ACH ──
+  const handleAchContinue = () => {
+    const errs = validateAchStep(1, data, achOnly);
+    if (Object.keys(errs).length) {
+      setErrors(errs);
+      setStageError('Please complete the required fields highlighted below before continuing.');
+      scrollToFirstError();
+      return;
+    }
+    setErrors({});
+    setStageError('');
+    setStage(8);
+  };
+
+  const handleAchSubmit = async () => {
+    const errs = validateAchStep(2, data, achOnly);
+    if (Object.keys(errs).length) {
+      setErrors(errs);
+      setSubmitError('Please upload all four documents and authorize ACH origination before submitting.');
+      scrollToFirstError();
+      return;
+    }
+    setErrors({});
+    setIsSubmittingAch(true);
+    setSubmitError('');
+    try {
+      const now = new Date();
+      const pad = n => String(n).padStart(2, '0');
+      const submittedAt = `${now.getFullYear()}-${pad(now.getMonth()+1)}-${pad(now.getDate())} ${pad(now.getHours())}:${pad(now.getMinutes())}:${pad(now.getSeconds())}`;
+      const identity = achIdentity(data, achOnly);
+      // `applicationType` is what lets one endpoint carry both halves. The ACH payload is
+      // deliberately NARROW: the three usage answers, the four documents and the
+      // authorization, plus enough identity to match it to a merchant. It does not resend
+      // the card application, which upstream already has.
+      const payload = {
+        applicationType: 'ach',
+        achOnly,
+        submittedAt,
+        origin: window.location.origin,
+        cardReference: cardReference || identity.existingReference || '',
+        legalName: identity.legalName,
+        ein: identity.ein,
+        contactEmail: identity.email,
+        achMonthlyVolume: data.achMonthlyVolume,
+        achAvgDebit: data.achAvgDebit,
+        achUseCase: data.achUseCase,
+        achAuthorized: !!data.achAuthorized,
+        files: ACH_REQUIRED_DOCS
+          .map(doc => data.achDocs && data.achDocs[doc.key]
+            ? { ...data.achDocs[doc.key], docKey: doc.key, docLabel: doc.label }
+            : null)
+          .filter(Boolean),
+      };
+      const res = await fetch('/api/submit', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
+      const json = await res.json();
+      if (!res.ok || json.success === false) {
+        setSubmitError(json.error || 'Submission failed. Please try again or call (407) 226-1151.');
+        setIsSubmittingAch(false);
+        return;
+      }
+      if (json.reference) setAchReference(json.reference);
+      setAchDone(true);
+      setStage(9);
+    } catch (err) {
+      setSubmitError('Network error. Please check your connection and try again.');
+      setIsSubmittingAch(false);
     }
   };
 
@@ -1974,11 +2438,126 @@ const App = () => {
     );
   }
 
+  const restartAll = () => {
+    reset();
+    setUploadedFile(null);
+    setAchOnly(false);
+    setAchDone(false);
+    setCardReference('');
+    setAchReference('');
+  };
+
   if (stage === 6) {
     return (
       <div className="app">
         <Header/>
-        <SuccessScreen onRestart={() => { reset(); setUploadedFile(null); }}/>
+        <SuccessScreen
+          onRestart={restartAll}
+          reference={cardReference}
+          achDone={achDone}
+          onActivateAch={() => { setErrors({}); setStageError(''); setSubmitError(''); setStage(7); }}
+        />
+      </div>
+    );
+  }
+
+  if (stage === 9) {
+    return (
+      <div className="app">
+        <Header/>
+        <AchSuccessScreen reference={achReference} achOnly={achOnly} onRestart={restartAll}/>
+      </div>
+    );
+  }
+
+  // ── Part 2: the ACH sub-wizard (steps 7 and 8) ──
+  // Its own shell rather than more cases in the card stepper below: it has two steps of its
+  // own, its own numbering, and a Back target that depends on how the merchant got here.
+  if (stage === 7 || stage === 8) {
+    const achStep = stage - 6;                 // 1 or 2
+    const isLast = achStep === ACH_STEPS.length;
+    const goBack = () => {
+      setErrors({}); setStageError(''); setSubmitError('');
+      // From step 1 the way back is the card confirmation, unless the merchant came in
+      // standalone, in which case there is no card application behind this and the only
+      // honest destination is the start.
+      if (achStep === 1) setStage(achOnly ? 0 : 6);
+      else setStage(7);
+    };
+
+    return (
+      <div className="app">
+        <Header/>
+        <div className="vb-body">
+          {/* Side rail. Same structure as the card wizard so Part 2 reads as the same
+              application, not a different product. The steps are NOT clickable the way the
+              card stages are: step 2 cannot be reached before step 1 is answered. */}
+          <aside className="vb-side">
+            <div>
+              <div className="vb-side-eyebrow">Part 2</div>
+              <h2 className="vb-side-title">Activate<br/>ACH Payments</h2>
+            </div>
+            <nav className="vb-vsteps" aria-label="ACH activation steps">
+              {ACH_STEPS.map((s, i) => {
+                const idx = i + 1;
+                const isActive = idx === achStep;
+                const isDone = idx < achStep;
+                return (
+                  <div
+                    key={s.title}
+                    className={`vb-vstep${isActive ? ' vb-vstep-active' : ''}${isDone ? ' vb-vstep-done' : ''}`}
+                    aria-current={isActive ? 'step' : undefined}
+                  >
+                    <span className="vb-vstep-num">{isDone ? '✓' : idx}</span>
+                    <span className="vb-vstep-body">
+                      <span className="vb-vstep-eyebrow">{s.eyebrow}</span>
+                      <span className="vb-vstep-title">{s.title}</span>
+                    </span>
+                  </div>
+                );
+              })}
+            </nav>
+            <div className="vb-side-foot">
+              <div className="vb-side-helper">
+                <strong>Need a hand?</strong>
+                Call <a href="tel:4072261151">(407) 226-1151</a> · this is also our help line.
+              </div>
+            </div>
+          </aside>
+
+          <div className="vb-stage-wrap">
+            <div className="vb-card">
+              <div className="vb-card-meta">
+                <span className="vb-card-meta-stage">ACH activation</span>
+                <span style={{color:'var(--ink-300)'}}>Step {achStep} of {ACH_STEPS.length}</span>
+              </div>
+              <h2 className="vb-card-title">{achStep === 1 ? "How Will You Use ACH?" : 'Upload Your Documents'}</h2>
+              <p className="vb-card-sub">
+                {achStep === 1
+                  ? 'Pull payments straight from a customer bank account.'
+                  : 'Drag files in or click to browse. PDF or image, max 7 MB each.'}
+              </p>
+              {stageError && <div className="tg-error-banner">{stageError}</div>}
+              <div className="vb-card-body">
+                {achStep === 1
+                  ? <AchUsageStep d={data} u={update} achOnly={achOnly} errors={errors}/>
+                  : <AchDocumentsStep d={data} u={update} errors={errors}/>}
+              </div>
+              {submitError && <div className="tg-error-banner">{submitError}</div>}
+              <div className="vb-card-foot">
+                <button className="tg-btn tg-btn-ghost" onClick={goBack} disabled={isSubmittingAch}>← Back</button>
+                <span/>
+                {isLast ? (
+                  <button className="tg-btn tg-btn-primary" disabled={isSubmittingAch} onClick={handleAchSubmit}>
+                    {isSubmittingAch ? 'Submitting…' : 'Submit ACH application'}
+                  </button>
+                ) : (
+                  <button className="tg-btn tg-btn-primary" onClick={handleAchContinue}>Continue →</button>
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
     );
   }
