@@ -149,9 +149,22 @@ function doPost(e) {
   try {
     const data = JSON.parse(e.postData.contents);
 
+    // One document, uploaded on its own request. Four documents inside a single submission
+    // exceeded the platform's 4.5 MB request limit, so each now arrives separately and is
+    // parked in Drive under the submission id until the submission itself lands.
+    if (data.applicationType === 'ach-document') {
+      try {
+        saveAchDocument(data);
+        return ok({ success: true });
+      } catch (err) {
+        Logger.log('ACH document error: ' + err.toString());
+        return ok({ success: false, error: err.toString() });
+      }
+    }
+
     // ── Part 2: ACH activation ──
     // Routed to its own handlers rather than folded into the card path. The ACH payload is a
-    // different shape (three usage answers and four documents, no owners, no banking, no
+    // different shape (the usage answers and a document manifest, no owners, no banking, no
     // signature), and the card sheet's column layout is positional, so writing ACH into it
     // would either shift every column or leave most of the row blank.
     if (data.applicationType === 'ach') {
@@ -276,7 +289,8 @@ function saveAchToSheet(d) {
     ]);
   }
 
-  const docNames = (d.files || []).map(function(f) { return f.docLabel || f.name; });
+  // The manifest, not the payload: the files themselves went up separately and live in Drive.
+  const docNames = (d.documents || d.files || []).map(function(f) { return f.docLabel || f.name; });
 
   sheet.appendRow([
     d.submittedAt        || new Date().toLocaleString('en-US'),
@@ -295,8 +309,47 @@ function saveAchToSheet(d) {
   ]);
 }
 
+// Everything for one ACH attempt lands in ACH Uploads/<submissionId>/ so the submission can
+// collect them afterwards. Folder-per-attempt rather than a flat dump, because two merchants
+// uploading "statement.pdf" at the same time must not overwrite one another.
+function achUploadFolder(submissionId, createIfMissing) {
+  const rootName = 'ACH Uploads';
+  var rootIter = DriveApp.getFoldersByName(rootName);
+  var root = rootIter.hasNext() ? rootIter.next() : (createIfMissing ? DriveApp.createFolder(rootName) : null);
+  if (!root) return null;
+
+  var iter = root.getFoldersByName(submissionId);
+  if (iter.hasNext()) return iter.next();
+  return createIfMissing ? root.createFolder(submissionId) : null;
+}
+
+function saveAchDocument(d) {
+  if (!d.submissionId) throw new Error('submissionId is required');
+  if (!d.file || !d.file.data) throw new Error('file is required');
+
+  const folder = achUploadFolder(d.submissionId, true);
+  const bytes = Utilities.base64Decode(d.file.data);
+  const blob = Utilities.newBlob(bytes, d.file.type || 'application/octet-stream', d.file.name || 'document');
+  // Prefixed with the document label so the folder reads as an application rather than four
+  // files whose purpose you have to guess from the merchant's own naming.
+  folder.createFile(blob).setName((d.docLabel ? d.docLabel + ' - ' : '') + (d.file.name || 'document'));
+  Logger.log('ACH document stored: ' + d.docLabel + ' for ' + d.submissionId);
+}
+
+function achAttachmentsFor(submissionId) {
+  if (!submissionId) return [];
+  const folder = achUploadFolder(submissionId, false);
+  if (!folder) return [];
+  const out = [];
+  const files = folder.getFiles();
+  while (files.hasNext()) out.push(files.next().getBlob());
+  return out;
+}
+
 function sendAchEmails(d) {
-  const attachments = buildAttachments(d.files || []);
+  // Attachments come from Drive now, not from the submission body. The body no longer
+  // carries them, which is the whole reason an ordinary set of bank statements fits.
+  const attachments = achAttachmentsFor(d.submissionId);
   const who         = d.legalName || 'Unknown';
   const subject     = 'ACH Activation – ' + who + (d.cardReference ? ' (' + d.cardReference + ')' : '');
   const opts        = { name: FROM_NAME, attachments: attachments };

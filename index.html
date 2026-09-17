@@ -971,6 +971,122 @@ const ACH_STEPS = [
   { eyebrow: 'Step 2', title: 'Required Documents' },
 ];
 
+// Vercel caps a function REQUEST BODY at 4.5 MB, and base64 inflates a file by about a third.
+// That ceiling is what every upload has to live under, so the practical budget is roughly 3 MB
+// of real file bytes per request. Documents are therefore uploaded ONE PER REQUEST rather than
+// all four inside the submission, which is what used to make an ordinary set of bank
+// statements fail with a 413 that the form then reported as a network error.
+const MAX_UPLOAD_BYTES = 3 * 1024 * 1024;
+
+// Images are re-encoded in the BROWSER before upload. Doing it here rather than in a function
+// is the point: a request-size limit cannot apply to work that never becomes a request, and a
+// phone photo of a licence or a cheque routinely drops from several MB to a few hundred KB.
+// PDFs pass through untouched. Nothing available client side recompresses a PDF meaningfully,
+// which is precisely why the per-request upload above is the real fix and this is the helper.
+const IMAGE_MAX_EDGE = 2048;
+const IMAGE_QUALITY = 0.85;
+
+function readAsDataUrl(file) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(reader.result);
+    reader.onerror = () => reject(new Error('Could not read that file.'));
+    reader.readAsDataURL(file);
+  });
+}
+
+async function optimizeForUpload(file) {
+  const passthrough = async () => {
+    const dataUrl = await readAsDataUrl(file);
+    return {
+      name: file.name,
+      type: file.type || 'application/octet-stream',
+      data: String(dataUrl).split(',')[1],
+      optimized: false,
+    };
+  };
+
+  if (!file.type || !file.type.startsWith('image/')) return passthrough();
+
+  try {
+    const dataUrl = await readAsDataUrl(file);
+    const img = await new Promise((resolve, reject) => {
+      const el = new Image();
+      el.onload = () => resolve(el);
+      // HEIC is the usual failure: Safari decodes it, Chrome does not. Falling back to the
+      // original is correct, because an image we cannot re-encode is still a valid document.
+      el.onerror = () => reject(new Error('unreadable image'));
+      el.src = dataUrl;
+    });
+
+    const scale = Math.min(1, IMAGE_MAX_EDGE / Math.max(img.width, img.height));
+    const canvas = document.createElement('canvas');
+    canvas.width = Math.max(1, Math.round(img.width * scale));
+    canvas.height = Math.max(1, Math.round(img.height * scale));
+    canvas.getContext('2d').drawImage(img, 0, 0, canvas.width, canvas.height);
+
+    const out = String(canvas.toDataURL('image/jpeg', IMAGE_QUALITY)).split(',')[1];
+    // Keep the original when re-encoding did not actually help. A small PNG screenshot can
+    // come back LARGER as a JPEG, and shipping the bigger one would be worse than doing
+    // nothing.
+    if (!out || out.length >= Math.ceil((file.size * 4) / 3)) return passthrough();
+
+    return { name: file.name.replace(/\.[^.]+$/, '') + '.jpg', type: 'image/jpeg', data: out, optimized: true };
+  } catch (err) {
+    return passthrough();
+  }
+}
+
+// Bytes a base64 string actually represents. Used for the size guard and for showing the
+// merchant a number that matches what their computer tells them the file is.
+function base64Bytes(b64) {
+  if (!b64) return 0;
+  const padding = b64.endsWith('==') ? 2 : b64.endsWith('=') ? 1 : 0;
+  return Math.floor((b64.length * 3) / 4) - padding;
+}
+
+function formatBytes(n) {
+  if (n >= 1024 * 1024) return (n / (1024 * 1024)).toFixed(1) + ' MB';
+  return Math.max(1, Math.round(n / 1024)) + ' KB';
+}
+
+// THE one place that talks to /api/submit, because the failure modes are the interesting part.
+// A 413 comes back from the platform as PLAIN TEXT, not JSON, so calling res.json() on it
+// throws and the caller ends up reporting a connection problem for what is really an
+// oversized file. That is exactly the bug a merchant hit: four documents in one request
+// exceeded the 4.5 MB body limit and the form said "check your connection".
+async function postSubmit(payload) {
+  let res;
+  try {
+    res = await fetch('/api/submit', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+    });
+  } catch (err) {
+    return { ok: false, error: 'Network error. Please check your connection and try again.' };
+  }
+
+  if (res.status === 413) {
+    return {
+      ok: false,
+      error: 'That file is too large to send. Please upload a smaller scan, or call (407) 226-1151 and we will take it by email.',
+    };
+  }
+
+  const text = await res.text().catch(() => '');
+  let json = null;
+  try { json = text ? JSON.parse(text) : null; } catch (err) { json = null; }
+
+  if (!res.ok || (json && json.success === false)) {
+    return {
+      ok: false,
+      error: (json && json.error) || `Submission failed (${res.status}). Please try again or call (407) 226-1151.`,
+    };
+  }
+  return { ok: true, json };
+}
+
 // The four files underwriting needs before it can price ACH. Unlike the card application's
 // optional rate-card upload, every one of these is REQUIRED, which is why they carry their
 // own completion count in the UI.
@@ -1858,29 +1974,60 @@ const AchUsageStep = ({ d, u, achOnly, errors = {} }) => (
 // ─── Part 2 · Step 2: Required documents ─────────────────────
 const AchDocRow = ({ doc, index, file, onPick, error }) => {
   const ref = useRef();
-  const handle = (e) => {
+  const [busy, setBusy] = useState(false);
+  const [tooBig, setTooBig] = useState('');
+
+  const handle = async (e) => {
     const f = e.target.files[0];
     if (!f) return;
-    if (f.size > 7 * 1024 * 1024) {
-      alert('File is too large. Please upload a file smaller than 7 MB.');
-      return;
+    setBusy(true);
+    setTooBig('');
+    try {
+      const picked = await optimizeForUpload(f);
+      const bytes = base64Bytes(picked.data);
+      if (bytes > MAX_UPLOAD_BYTES) {
+        // Refused HERE, with the real numbers, rather than letting the server reject the
+        // request and surface as a generic failure the merchant cannot act on.
+        setTooBig(
+          `${picked.name} is ${formatBytes(bytes)}. The limit is ${formatBytes(MAX_UPLOAD_BYTES)} per document. ` +
+          'Please upload a smaller scan, or call (407) 226-1151 and we will take it by email.'
+        );
+        onPick(doc.key, null);
+        return;
+      }
+      onPick(doc.key, { ...picked, bytes });
+    } catch (err) {
+      setTooBig('We could not read that file. Please try a different copy, or call (407) 226-1151.');
+    } finally {
+      setBusy(false);
+      // Let the same file be chosen again after a failure; without this the input keeps the
+      // old value and re-picking it fires no change event.
+      if (ref.current) ref.current.value = '';
     }
-    const reader = new FileReader();
-    reader.onload = (ev) => onPick(doc.key, { name: f.name, type: f.type, data: ev.target.result.split(',')[1] });
-    reader.readAsDataURL(f);
   };
+
+  const saving = Math.max(0, (file && file.originalBytes ? file.originalBytes - file.bytes : 0));
+
   return (
-    <div className={'tg-ach-doc' + (file ? ' is-done' : '') + (error ? ' tg-field-error' : '')}>
+    <div className={'tg-ach-doc' + (file ? ' is-done' : '') + (error || tooBig ? ' tg-field-error' : '')}>
       <span className="tg-ach-doc-num" aria-hidden="true">
         {file ? '✓' : String(index + 1).padStart(2, '0')}
       </span>
       <span className="tg-ach-doc-text">
         <strong>{doc.label}</strong>
-        <em>{file ? file.name : doc.hint}</em>
+        {tooBig
+          ? <em className="tg-ach-doc-warn">{tooBig}</em>
+          : <em>
+              {busy
+                ? 'Processing…'
+                : file
+                  ? `${file.name} · ${formatBytes(file.bytes)}${file.optimized ? ' · compressed' : ''}`
+                  : doc.hint}
+            </em>}
       </span>
-      <input ref={ref} type="file" accept=".pdf,.png,.jpg,.jpeg" hidden onChange={handle}/>
-      <button type="button" className="tg-ach-doc-btn" onClick={() => ref.current.click()}>
-        {file ? 'Replace' : 'Upload'}
+      <input ref={ref} type="file" accept=".pdf,.png,.jpg,.jpeg,.heic,.heif" hidden onChange={handle}/>
+      <button type="button" className="tg-ach-doc-btn" disabled={busy} onClick={() => ref.current.click()}>
+        {busy ? '…' : file ? 'Replace' : 'Upload'}
       </button>
     </div>
   );
@@ -2300,6 +2447,7 @@ const App = () => {
   const [isSubmittingAch, setIsSubmittingAch] = useState(false);
   const [cardReference, setCardReference] = useState('');
   const [achReference, setAchReference] = useState('');
+  const [achUploadStatus, setAchUploadStatus] = useState('');
 
   useEffect(() => {
     // Two ways to land on the standalone ACH application:
@@ -2411,6 +2559,11 @@ const App = () => {
       const pad = n => String(n).padStart(2, '0');
       const submittedAt = `${now.getFullYear()}-${pad(now.getMonth()+1)}-${pad(now.getDate())} ${pad(now.getHours())}:${pad(now.getMinutes())}:${pad(now.getSeconds())}`;
       const identity = achIdentity(data, achOnly);
+      // Groups this attempt's document uploads with its submission. Regenerated per attempt
+      // on purpose: a retry should send a clean set rather than merge with a half-uploaded one.
+      const submissionId = (window.crypto && window.crypto.randomUUID)
+        ? window.crypto.randomUUID()
+        : 'ach-' + Date.now() + '-' + Math.random().toString(36).slice(2, 10);
       // `applicationType` is what lets one endpoint carry both halves. The ACH payload is
       // deliberately NARROW: the three usage answers, the four documents and the
       // authorization, plus enough identity to match it to a merchant. It does not resend
@@ -2430,27 +2583,55 @@ const App = () => {
         achMaximumAmount: data.achMaximumAmount,
         achUseCase: data.achUseCase,
         achAuthorized: !!data.achAuthorized,
-        files: ACH_REQUIRED_DOCS
+        // NO `files` key. The documents were uploaded one per request above; this carries the
+        // manifest so upstream knows what to expect and can say so if one is missing.
+        submissionId,
+        documents: ACH_REQUIRED_DOCS
           .map(doc => data.achDocs && data.achDocs[doc.key]
-            ? { ...data.achDocs[doc.key], docKey: doc.key, docLabel: doc.label }
+            ? { docKey: doc.key, docLabel: doc.label, name: data.achDocs[doc.key].name, bytes: data.achDocs[doc.key].bytes }
             : null)
           .filter(Boolean),
       };
-      const res = await fetch('/api/submit', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload),
-      });
-      const json = await res.json();
-      if (!res.ok || json.success === false) {
-        setSubmitError(json.error || 'Submission failed. Please try again or call (407) 226-1151.');
+
+      // One request per document. Each then gets its own 4.5 MB budget instead of four
+      // documents sharing one, which is what produced the 413. Sequential rather than
+      // parallel: four large concurrent uploads on a phone connection is how you turn a slow
+      // submission into a failed one.
+      for (let i = 0; i < ACH_REQUIRED_DOCS.length; i++) {
+        const doc = ACH_REQUIRED_DOCS[i];
+        const picked = data.achDocs && data.achDocs[doc.key];
+        if (!picked) continue;
+        setAchUploadStatus(`Uploading ${doc.label} (${i + 1} of ${ACH_REQUIRED_DOCS.length})…`);
+        const docResult = await postSubmit({
+          applicationType: 'ach-document',
+          submissionId,
+          docKey: doc.key,
+          docLabel: doc.label,
+          legalName: identity.legalName,
+          file: { name: picked.name, type: picked.type, data: picked.data },
+        });
+        if (!docResult.ok) {
+          setSubmitError(`${doc.label}: ${docResult.error}`);
+          setAchUploadStatus('');
+          setIsSubmittingAch(false);
+          return;
+        }
+      }
+
+      setAchUploadStatus('Submitting your application…');
+      const result = await postSubmit(payload);
+      if (!result.ok) {
+        setSubmitError(result.error);
+        setAchUploadStatus('');
         setIsSubmittingAch(false);
         return;
       }
-      if (json.reference) setAchReference(json.reference);
+      setAchUploadStatus('');
+      if (result.json && result.json.reference) setAchReference(result.json.reference);
       setAchDone(true);
       setStage(9);
     } catch (err) {
+      setAchUploadStatus('');
       setSubmitError('Network error. Please check your connection and try again.');
       setIsSubmittingAch(false);
     }
@@ -2576,7 +2757,10 @@ const App = () => {
                 <span/>
                 {isLast ? (
                   <button className="tg-btn tg-btn-primary" disabled={isSubmittingAch} onClick={handleAchSubmit}>
-                    {isSubmittingAch ? 'Submitting…' : 'Submit ACH application'}
+                    {/* Names the document being sent rather than a bare spinner: four
+                        sequential uploads on a phone can take a while, and silence is what
+                        makes people close the tab halfway through. */}
+                    {isSubmittingAch ? (achUploadStatus || 'Submitting…') : 'Submit ACH application'}
                   </button>
                 ) : (
                   <button className="tg-btn tg-btn-primary" onClick={handleAchContinue}>Continue →</button>
