@@ -30,6 +30,16 @@ export default async function handler(req) {
   try {
     const body = await req.text();
 
+    // A document upload is a file on its way to Drive, not a business event. iCore wants one
+    // webhook per application, so firing it four more times per ACH submission would be noise
+    // its checklist has to learn to ignore.
+    let isDocumentUpload = false;
+    try {
+      isDocumentUpload = JSON.parse(body).applicationType === 'ach-document';
+    } catch {
+      isDocumentUpload = false;
+    }
+
     // Fan out to Apps Script + iCore in parallel (iCore failure is non-fatal)
     const [upstream, icoreResult] = await Promise.allSettled([
 
@@ -42,7 +52,7 @@ export default async function handler(req) {
       }),
 
       // ── iCore: checklist checkbox + account note ──────────────────────────
-      icoreUrl
+      icoreUrl && !isDocumentUpload
         ? fetch(`${icoreUrl}/api/webhooks/tiger-merchant`, {
             method: 'POST',
             headers: {
