@@ -132,6 +132,17 @@ function testGmail() {
   Logger.log('Test email sent to ' + Session.getActiveUser().getEmail());
 }
 
+// ── Run this ONCE after pasting the new code ─────────────────────────────────
+// The ACH document uploads write to Drive, which this script never used before, so Google
+// treats it as a new permission. Running this from the editor is what makes Google show the
+// permission prompt. Skip it and the deployment will look perfectly healthy while the very
+// first document upload fails with an authorization error.
+function authorizeNewPermissions() {
+  const folder = achUploadFolder('permission-check', true);
+  folder.setTrashed(true);
+  Logger.log('Drive permission granted. Nothing else to do.');
+}
+
 // ── SSN helpers ───────────────────────────────────────────────────────────────
 // Returns last-4 masked: •••-••-1234
 function maskSsn(ssn) {
