@@ -267,6 +267,21 @@ a{color:inherit;text-decoration:none;}
   font-size: 11px; color: rgba(255,255,255,0.55);
 }
 
+.tg-ach-optin { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 4px; }
+.tg-ach-optin-card {
+  display: flex; gap: 10px; align-items: flex-start; cursor: pointer;
+  padding: 14px; border: 1px solid var(--line-strong); border-radius: 10px;
+  background: var(--surface);
+}
+.tg-ach-optin-card.is-on { border-color: var(--brand); background: var(--brand-50); }
+.tg-ach-optin-card input { margin-top: 2px; flex: 0 0 auto; }
+.tg-ach-optin-card strong { display: block; font-size: 13px; color: var(--text); }
+.tg-ach-optin-card em { display: block; font-style: normal; font-size: 12px; color: var(--text-muted); margin-top: 3px; line-height: 1.45; }
+.tg-ach-inline-body { margin-top: 18px; }
+.tg-ach-rule { border: 0; border-top: 1px solid var(--line); margin: 22px 0 18px; }
+.tg-ach-note-warn { background: #FEF6F5; border-color: rgba(201,53,43,0.25); }
+.tg-ach-note-warn strong { color: var(--danger); }
+
 .tg-ach-pricing {
   display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px;
   margin: 22px auto 0; max-width: 560px;
@@ -902,12 +917,28 @@ a{color:inherit;text-decoration:none;}
   .vb-card-foot > span { display: none; }
   .vb-card-foot .tg-btn { flex: 1; justify-content: center; }
 
+  .tg-ach-optin { grid-template-columns: 1fr; }
   .tg-ach-teaser { padding: 20px 18px; }
   .tg-ach-teaser h2 { font-size: 22px; }
   .tg-ach-teaser-badges { gap: 6px; }
   .tg-ach-doc { grid-template-columns: 28px 1fr; row-gap: 10px; }
   .tg-ach-doc-btn { grid-column: 2; justify-self: start; }
-  .tg-ach-pricing { grid-template-columns: 1fr; }
+  .tg-ach-optin { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 4px; }
+.tg-ach-optin-card {
+  display: flex; gap: 10px; align-items: flex-start; cursor: pointer;
+  padding: 14px; border: 1px solid var(--line-strong); border-radius: 10px;
+  background: var(--surface);
+}
+.tg-ach-optin-card.is-on { border-color: var(--brand); background: var(--brand-50); }
+.tg-ach-optin-card input { margin-top: 2px; flex: 0 0 auto; }
+.tg-ach-optin-card strong { display: block; font-size: 13px; color: var(--text); }
+.tg-ach-optin-card em { display: block; font-style: normal; font-size: 12px; color: var(--text-muted); margin-top: 3px; line-height: 1.45; }
+.tg-ach-inline-body { margin-top: 18px; }
+.tg-ach-rule { border: 0; border-top: 1px solid var(--line); margin: 22px 0 18px; }
+.tg-ach-note-warn { background: #FEF6F5; border-color: rgba(201,53,43,0.25); }
+.tg-ach-note-warn strong { color: var(--danger); }
+
+.tg-ach-pricing { grid-template-columns: 1fr; }
   .tg-success { padding: 24px 16px; }
   .tg-success h1 { font-size: 22px; }
   .tg-success p { font-size: 13px; }
@@ -1102,8 +1133,20 @@ const STAGES = [
   { eyebrow: 'Stage 2', title: 'Owner & Control' },
   { eyebrow: 'Stage 3', title: 'Processing Needs' },
   { eyebrow: 'Stage 4', title: 'Banking' },
-  { eyebrow: 'Stage 5', title: 'Review & Sign' },
+  { eyebrow: 'Stage 5', title: 'ACH Payments' },
+  { eyebrow: 'Stage 6', title: 'Review & Sign' },
 ];
+
+// Named rather than scattered as numbers, because two flows share one `stage` value and an
+// off-by-one between them is the kind of bug that silently sends a merchant to the wrong
+// screen. 1 to 6 is the application; 7 is its confirmation; 8 to 10 are the STANDALONE ACH
+// route for a merchant who already has Tiger and is not filling in an application at all.
+const STAGE_ACH_INLINE = 5;
+const STAGE_REVIEW     = 6;
+const STAGE_DONE       = 7;
+const STAGE_ACH_USAGE  = 8;
+const STAGE_ACH_DOCS   = 9;
+const STAGE_ACH_DONE   = 10;
 
 const EMPTY_FORM = {
   legalName:'', dba:'', businessType:'', ein:'', industry:'', website:'',
@@ -1129,7 +1172,12 @@ const EMPTY_FORM = {
   docsReviewed: false,
   consent: false,
 
-  // ── Part 2: ACH activation ──
+  // ── ACH ──
+  // Whether this applicant wants ACH at all. Inside the application for new merchants, so the
+  // answer has to be explicit: an untouched ACH stage must mean "cards only", never "they
+  // forgot", or Review would block on fields nobody asked them to fill in.
+  wantsAch: false,
+
   // Five answers, not the three the design frames show. The frames omit the monthly count
   // and the maximum amount, but Tiger asked for both in writing ("Average # of Monthly ACH,
   // Maximum Amount"), and underwriting needs them to set a per-transaction ceiling rather
@@ -1180,10 +1228,22 @@ function requiredFieldsForStage(stage, d) {
     }
     case 3: return ['monthlyVolume', 'avgTicket'];
     case 4: return ['bankName', 'bankRoutingNumber', 'bankAccountNumber', 'bankAccountType'];
+    // Stage 5 is ACH. Nothing is required unless the merchant opted in, so "cards only"
+    // passes straight through rather than blocking Review on fields they declined.
+    case 5: return d.wantsAch ? ['achMonthlyVolume', 'achAvgDebit', 'achMonthlyCount', 'achMaximumAmount', 'achUseCase'] : [];
     default: return [];
   }
 }
 function validateStage(stage, d) {
+  if (stage === STAGE_ACH_INLINE && d.wantsAch) {
+    // Same rule the standalone route enforces, reused rather than restated so the two entry
+    // points cannot drift into demanding different things.
+    const errs = {};
+    requiredFieldsForStage(stage, d).forEach(k => {
+      if (!d[k] || !String(d[k]).trim()) errs[k] = true;
+    });
+    return Object.assign(errs, validateAchStep(2, d, false));
+  }
   const errs = {};
   requiredFieldsForStage(stage, d).forEach(k => {
     if (!d[k] || !String(d[k]).trim()) errs[k] = true;
@@ -1249,8 +1309,13 @@ function stageCompletion(d) {
   const s2 = ['owner1FirstName','owner1LastName','owner1Title','owner1Ownership','owner1Ssn','owner1Dob','owner1Email'].filter(has).length / 7;
   const s3 = ['monthlyVolume','avgTicket'].filter(has).length / 2;
   const s4 = ['bankRoutingNumber','bankAccountNumber','bankName'].filter(has).length / 3;
-  const s5 = (d.consent && d.signature && d.docsReviewed) ? 1 : 0;
-  return [s1, s2, s3, s4, s5];
+  const achDocCount = ACH_REQUIRED_DOCS.filter(doc => d.achDocs && d.achDocs[doc.key]).length;
+  const s5 = !d.wantsAch
+    ? 1  // "cards only" is a complete answer, not an empty stage
+    : (['achMonthlyVolume','achAvgDebit','achMonthlyCount','achMaximumAmount','achUseCase'].filter(has).length
+        + achDocCount + (d.achAuthorized ? 1 : 0)) / 10;
+  const s6 = (d.consent && d.signature && d.docsReviewed) ? 1 : 0;
+  return [s1, s2, s3, s4, s5, s6];
 }
 
 // ─── Helpers ─────────────────────────────────────────────────
@@ -2069,6 +2134,44 @@ const AchDocumentsStep = ({ d, u, errors = {} }) => {
   );
 };
 
+// ─── Stage 5: ACH, inside the application ────────────────────
+// New merchants answer ACH here rather than being offered it after submitting. The standalone
+// /ach route still exists, but only for merchants who ALREADY have Tiger and are adding ACH to
+// an account rather than filling in an application.
+//
+// Reuses AchUsageStep and AchDocumentsStep rather than restating them: the standalone route
+// keeps its two-step shape from the design frames, and this shows the same two blocks on one
+// stage because the wizard already has a stepper of its own and nesting a second one inside a
+// stage would read as a bug.
+const AchInlineStage = ({ d, u, errors = {} }) => (
+  <>
+    <div className="tg-ach-optin">
+      <label className={'tg-ach-optin-card' + (d.wantsAch ? ' is-on' : '')}>
+        <input type="radio" name="wantsAch" checked={!!d.wantsAch} onChange={() => u('wantsAch', true)} />
+        <span>
+          <strong>Yes, add ACH</strong>
+          <em>Pull payments straight from a customer's bank account. 1% per transaction, 3-day settlement.</em>
+        </span>
+      </label>
+      <label className={'tg-ach-optin-card' + (!d.wantsAch ? ' is-on' : '')}>
+        <input type="radio" name="wantsAch" checked={!d.wantsAch} onChange={() => u('wantsAch', false)} />
+        <span>
+          <strong>Cards only for now</strong>
+          <em>You can add ACH later without redoing this application.</em>
+        </span>
+      </label>
+    </div>
+
+    {d.wantsAch && (
+      <div className="tg-ach-inline-body">
+        <AchUsageStep d={d} u={u} achOnly={false} errors={errors} />
+        <hr className="tg-ach-rule" />
+        <AchDocumentsStep d={d} u={u} errors={errors} />
+      </div>
+    )}
+  </>
+);
+
 // ─── Part 2: ACH activated ───────────────────────────────────
 const AchSuccessScreen = ({ reference, achOnly, onRestart }) => (
   <div className="tg-success">
@@ -2324,7 +2427,7 @@ const WelcomeScreen = ({ onStart }) => (
           Let's Get Your Storefront <em>Taking Payments.</em>
         </h1>
         <p className="vb-welcome-lede">
-          Five short stages — tell us about your business, owners, processing, and where to settle funds. Most merchants finish in seven minutes.
+          Six short stages: your business, owners, processing, where to settle funds, and whether you want bank transfers too. Most merchants finish in seven minutes.
         </p>
         <div className="vb-pricing">
           <PricingRow headline={<><strong>$0</strong> Setup Fees</>} sub="Get Started at No Cost."/>
@@ -2374,7 +2477,7 @@ const PricingRow = ({ headline, sub }) => (
 );
 
 // ─── Success Screen ──────────────────────────────────────────
-const SuccessScreen = ({ onRestart, reference, onActivateAch, achDone }) => {
+const SuccessScreen = ({ onRestart, reference, onActivateAch, achDone, achNote }) => {
   const colors = ['#3FB94C','#F47A1F','#494A7D','#B6F3BF','#FFD16C'];
   const pieces = Array.from({length: 60}, (_, i) => ({
     left: Math.random() * 100,
@@ -2401,6 +2504,7 @@ const SuccessScreen = ({ onRestart, reference, onActivateAch, achDone }) => {
       <p>
         {reference ? <>Reference <strong>{reference}</strong> · </> : null}
         We'll email you within 3 business days with your underwriting decision.
+        {achDone ? ' Your ACH request is included and is underwritten alongside it.' : ''}
       </p>
       <FundingTimeline/>
 
@@ -2448,6 +2552,9 @@ const App = () => {
   const [cardReference, setCardReference] = useState('');
   const [achReference, setAchReference] = useState('');
   const [achUploadStatus, setAchUploadStatus] = useState('');
+  // Set only when the card application succeeded but the ACH half did not. The confirmation
+  // then says so plainly instead of implying both went through.
+  const [achSubmitNote, setAchSubmitNote] = useState('');
 
   useEffect(() => {
     // Two ways to land on the standalone ACH application:
@@ -2461,7 +2568,7 @@ const App = () => {
     const isAchQuery = new URLSearchParams(window.location.search).get('ach') === '1';
     if (isAchPath || isAchQuery) {
       setAchOnly(true);
-      setStage(7);
+      setStage(STAGE_ACH_USAGE);
     }
   }, []);
 
@@ -2501,30 +2608,48 @@ const App = () => {
       const now = new Date();
       const pad = n => String(n).padStart(2, '0');
       const submittedAt = `${now.getFullYear()}-${pad(now.getMonth()+1)}-${pad(now.getDate())} ${pad(now.getHours())}:${pad(now.getMinutes())}:${pad(now.getSeconds())}`;
+      // `achDocs` is stripped deliberately. It holds four base64 documents, and spreading it
+      // into the card submission would put them all back into one request body, which is the
+      // exact 4.5 MB limit that broke ACH before. The documents go up on their own requests
+      // below; the card application never carries them.
+      const { achDocs, ...cardData } = data;
       const payload = {
-        ...data,
+        ...cardData,
         submittedAt,
         origin: window.location.origin,
         files: uploadedFile ? [uploadedFile] : [],
       };
-      const res = await fetch('/api/submit', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload),
-      });
-      const json = await res.json();
-      if (!res.ok || json.success === false) {
-        setSubmitError(json.error || 'Submission failed. Please try again or call (407) 226-1151.');
+      const cardResult = await postSubmit(payload);
+      if (!cardResult.ok) {
+        setSubmitError(cardResult.error);
         setIsSubmitting(false);
         return;
       }
       // The reference is issued upstream, never minted here. If the backend does not return
       // one the confirmation simply omits it rather than inventing something that would not
       // match what the merchant is told by email.
-      if (json.reference) setCardReference(json.reference);
-      setStage(6);
+      const reference = cardResult.json && cardResult.json.reference;
+      if (reference) setCardReference(reference);
+
+      // ACH, when they asked for it on stage 5. Sent AFTER the card application on purpose:
+      // the card application is the primary act, and it must not be held hostage to an ACH
+      // upload failing. If ACH does fail the merchant still lands on the confirmation with
+      // their card application in, and the Part 2 panel is there to retry from.
+      if (data.wantsAch) {
+        const achResult = await submitAchApplication({ reference: reference || '', standalone: false });
+        if (!achResult.ok) {
+          setAchSubmitNote(achResult.error);
+        } else {
+          setAchDone(true);
+          if (achResult.reference) setAchReference(achResult.reference);
+        }
+      }
+
+      setAchUploadStatus('');
+      setStage(STAGE_DONE);
     } catch (err) {
-      setSubmitError('Network error — please check your connection and try again.');
+      setAchUploadStatus('');
+      setSubmitError('Network error. Please check your connection and try again.');
       setIsSubmitting(false);
     }
   };
@@ -2540,9 +2665,77 @@ const App = () => {
     }
     setErrors({});
     setStageError('');
-    setStage(8);
+    setStage(STAGE_ACH_DOCS);
   };
 
+  // THE one ACH submission path, shared by both entry points: stage 5 of a new merchant's
+  // application, and the standalone /ach route for a merchant who already has Tiger. Sharing
+  // it is what stops the two drifting into sending different shapes to the same endpoint.
+  //
+  // Returns a result rather than driving the screen itself, because the two callers land
+  // somewhere different afterwards: the inline one continues to the card confirmation, the
+  // standalone one goes to its own.
+  const submitAchApplication = async ({ reference, standalone }) => {
+    const now = new Date();
+    const pad = n => String(n).padStart(2, '0');
+    const submittedAt = `${now.getFullYear()}-${pad(now.getMonth()+1)}-${pad(now.getDate())} ${pad(now.getHours())}:${pad(now.getMinutes())}:${pad(now.getSeconds())}`;
+    const identity = achIdentity(data, standalone);
+    // Groups this attempt's document uploads with its submission. Regenerated per attempt on
+    // purpose: a retry should send a clean set rather than merge with a half-uploaded one.
+    const submissionId = (window.crypto && window.crypto.randomUUID)
+      ? window.crypto.randomUUID()
+      : 'ach-' + Date.now() + '-' + Math.random().toString(36).slice(2, 10);
+
+    // One request per document. Each then gets its own 4.5 MB budget instead of four sharing
+    // one, which is what produced the 413. Sequential rather than parallel: four large
+    // concurrent uploads on a phone connection turn a slow submission into a failed one.
+    for (let i = 0; i < ACH_REQUIRED_DOCS.length; i++) {
+      const doc = ACH_REQUIRED_DOCS[i];
+      const picked = data.achDocs && data.achDocs[doc.key];
+      if (!picked) continue;
+      setAchUploadStatus(`Uploading ${doc.label} (${i + 1} of ${ACH_REQUIRED_DOCS.length})…`);
+      const docResult = await postSubmit({
+        applicationType: 'ach-document',
+        submissionId,
+        docKey: doc.key,
+        docLabel: doc.label,
+        legalName: identity.legalName,
+        file: { name: picked.name, type: picked.type, data: picked.data },
+      });
+      if (!docResult.ok) return { ok: false, error: `${doc.label}: ${docResult.error}` };
+    }
+
+    setAchUploadStatus('Submitting your ACH details…');
+    // Deliberately NARROW: the five usage answers, the authorization and a document manifest,
+    // plus enough identity to match it to a merchant. It never resends the card application.
+    const result = await postSubmit({
+      applicationType: 'ach',
+      achOnly: standalone,
+      submittedAt,
+      origin: window.location.origin,
+      cardReference: reference || cardReference || identity.existingReference || '',
+      legalName: identity.legalName,
+      ein: identity.ein,
+      contactEmail: identity.email,
+      achMonthlyVolume: data.achMonthlyVolume,
+      achAvgDebit: data.achAvgDebit,
+      achMonthlyCount: data.achMonthlyCount,
+      achMaximumAmount: data.achMaximumAmount,
+      achUseCase: data.achUseCase,
+      achAuthorized: !!data.achAuthorized,
+      submissionId,
+      documents: ACH_REQUIRED_DOCS
+        .map(doc => data.achDocs && data.achDocs[doc.key]
+          ? { docKey: doc.key, docLabel: doc.label, name: data.achDocs[doc.key].name, bytes: data.achDocs[doc.key].bytes }
+          : null)
+        .filter(Boolean),
+    });
+
+    if (!result.ok) return { ok: false, error: result.error };
+    return { ok: true, reference: result.json && result.json.reference };
+  };
+
+  // The STANDALONE route's submit button. The inline one rides on the card submission.
   const handleAchSubmit = async () => {
     const errs = validateAchStep(2, data, achOnly);
     if (Object.keys(errs).length) {
@@ -2555,86 +2748,31 @@ const App = () => {
     setIsSubmittingAch(true);
     setSubmitError('');
     try {
-      const now = new Date();
-      const pad = n => String(n).padStart(2, '0');
-      const submittedAt = `${now.getFullYear()}-${pad(now.getMonth()+1)}-${pad(now.getDate())} ${pad(now.getHours())}:${pad(now.getMinutes())}:${pad(now.getSeconds())}`;
-      const identity = achIdentity(data, achOnly);
-      // Groups this attempt's document uploads with its submission. Regenerated per attempt
-      // on purpose: a retry should send a clean set rather than merge with a half-uploaded one.
-      const submissionId = (window.crypto && window.crypto.randomUUID)
-        ? window.crypto.randomUUID()
-        : 'ach-' + Date.now() + '-' + Math.random().toString(36).slice(2, 10);
-      // `applicationType` is what lets one endpoint carry both halves. The ACH payload is
-      // deliberately NARROW: the three usage answers, the four documents and the
-      // authorization, plus enough identity to match it to a merchant. It does not resend
-      // the card application, which upstream already has.
-      const payload = {
-        applicationType: 'ach',
-        achOnly,
-        submittedAt,
-        origin: window.location.origin,
-        cardReference: cardReference || identity.existingReference || '',
-        legalName: identity.legalName,
-        ein: identity.ein,
-        contactEmail: identity.email,
-        achMonthlyVolume: data.achMonthlyVolume,
-        achAvgDebit: data.achAvgDebit,
-        achMonthlyCount: data.achMonthlyCount,
-        achMaximumAmount: data.achMaximumAmount,
-        achUseCase: data.achUseCase,
-        achAuthorized: !!data.achAuthorized,
-        // NO `files` key. The documents were uploaded one per request above; this carries the
-        // manifest so upstream knows what to expect and can say so if one is missing.
-        submissionId,
-        documents: ACH_REQUIRED_DOCS
-          .map(doc => data.achDocs && data.achDocs[doc.key]
-            ? { docKey: doc.key, docLabel: doc.label, name: data.achDocs[doc.key].name, bytes: data.achDocs[doc.key].bytes }
-            : null)
-          .filter(Boolean),
-      };
-
-      // One request per document. Each then gets its own 4.5 MB budget instead of four
-      // documents sharing one, which is what produced the 413. Sequential rather than
-      // parallel: four large concurrent uploads on a phone connection is how you turn a slow
-      // submission into a failed one.
-      for (let i = 0; i < ACH_REQUIRED_DOCS.length; i++) {
-        const doc = ACH_REQUIRED_DOCS[i];
-        const picked = data.achDocs && data.achDocs[doc.key];
-        if (!picked) continue;
-        setAchUploadStatus(`Uploading ${doc.label} (${i + 1} of ${ACH_REQUIRED_DOCS.length})…`);
-        const docResult = await postSubmit({
-          applicationType: 'ach-document',
-          submissionId,
-          docKey: doc.key,
-          docLabel: doc.label,
-          legalName: identity.legalName,
-          file: { name: picked.name, type: picked.type, data: picked.data },
-        });
-        if (!docResult.ok) {
-          setSubmitError(`${doc.label}: ${docResult.error}`);
-          setAchUploadStatus('');
-          setIsSubmittingAch(false);
-          return;
-        }
-      }
-
-      setAchUploadStatus('Submitting your application…');
-      const result = await postSubmit(payload);
+      const result = await submitAchApplication({ reference: '', standalone: achOnly });
+      setAchUploadStatus('');
       if (!result.ok) {
         setSubmitError(result.error);
-        setAchUploadStatus('');
         setIsSubmittingAch(false);
         return;
       }
-      setAchUploadStatus('');
-      if (result.json && result.json.reference) setAchReference(result.json.reference);
+      if (result.reference) setAchReference(result.reference);
       setAchDone(true);
-      setStage(9);
+      setStage(STAGE_ACH_DONE);
     } catch (err) {
       setAchUploadStatus('');
       setSubmitError('Network error. Please check your connection and try again.');
       setIsSubmittingAch(false);
     }
+  };
+
+  const restartAll = () => {
+    reset();
+    setUploadedFile(null);
+    setAchOnly(false);
+    setAchDone(false);
+    setAchSubmitNote('');
+    setCardReference('');
+    setAchReference('');
   };
 
   if (stage === 0) {
@@ -2646,16 +2784,7 @@ const App = () => {
     );
   }
 
-  const restartAll = () => {
-    reset();
-    setUploadedFile(null);
-    setAchOnly(false);
-    setAchDone(false);
-    setCardReference('');
-    setAchReference('');
-  };
-
-  if (stage === 6) {
+  if (stage === STAGE_DONE) {
     return (
       <div className="app">
         <Header/>
@@ -2663,13 +2792,14 @@ const App = () => {
           onRestart={restartAll}
           reference={cardReference}
           achDone={achDone}
-          onActivateAch={() => { setErrors({}); setStageError(''); setSubmitError(''); setStage(7); }}
+          achNote={achSubmitNote}
+          onActivateAch={() => { setErrors({}); setStageError(''); setSubmitError(''); setStage(STAGE_ACH_USAGE); }}
         />
       </div>
     );
   }
 
-  if (stage === 9) {
+  if (stage === STAGE_ACH_DONE) {
     return (
       <div className="app">
         <Header/>
@@ -2681,16 +2811,16 @@ const App = () => {
   // ── Part 2: the ACH sub-wizard (steps 7 and 8) ──
   // Its own shell rather than more cases in the card stepper below: it has two steps of its
   // own, its own numbering, and a Back target that depends on how the merchant got here.
-  if (stage === 7 || stage === 8) {
-    const achStep = stage - 6;                 // 1 or 2
+  if (stage === STAGE_ACH_USAGE || stage === STAGE_ACH_DOCS) {
+    const achStep = stage - (STAGE_ACH_USAGE - 1);   // 1 or 2
     const isLast = achStep === ACH_STEPS.length;
     const goBack = () => {
       setErrors({}); setStageError(''); setSubmitError('');
       // From step 1 the way back is the card confirmation, unless the merchant came in
       // standalone, in which case there is no card application behind this and the only
       // honest destination is the start.
-      if (achStep === 1) setStage(achOnly ? 0 : 6);
-      else setStage(7);
+      if (achStep === 1) setStage(achOnly ? 0 : STAGE_DONE);
+      else setStage(STAGE_ACH_USAGE);
     };
 
     return (
@@ -2702,7 +2832,10 @@ const App = () => {
               card stages are: step 2 cannot be reached before step 1 is answered. */}
           <aside className="vb-side">
             <div>
-              <div className="vb-side-eyebrow">Part 2</div>
+              {/* Not "Part 2" here. This route is for a merchant who ALREADY has Tiger and is
+                  adding ACH to an existing account, so there is no part one in front of it.
+                  New merchants answer ACH on stage 5 of the application instead. */}
+              <div className="vb-side-eyebrow">Add to your account</div>
               <h2 className="vb-side-title">Activate<br/>ACH Payments</h2>
             </div>
             <nav className="vb-vsteps" aria-label="ACH activation steps">
@@ -2780,7 +2913,8 @@ const App = () => {
     if (stage === 2) return <Stage2 d={data} u={update} errors={errors}/>;
     if (stage === 3) return <Stage3 d={data} u={update} uploadedFile={uploadedFile} setUploadedFile={setUploadedFile} errors={errors}/>;
     if (stage === 4) return <Stage4 d={data} u={update} errors={errors}/>;
-    if (stage === 5) return <Stage5 d={data} u={update} setStage={goToStage} errors={errors}/>;
+    if (stage === STAGE_ACH_INLINE) return <AchInlineStage d={data} u={update} errors={errors}/>;
+    if (stage === STAGE_REVIEW) return <Stage5 d={data} u={update} setStage={goToStage} errors={errors}/>;
   };
 
   return (
@@ -2845,7 +2979,7 @@ const App = () => {
           <div className="vb-card">
             <div className="vb-card-meta">
               <span className="vb-card-meta-stage">{STAGES[stageIdx].title}</span>
-              <span style={{color:'var(--ink-300)'}}>Step {stage} of 5</span>
+              <span style={{color:'var(--ink-300)'}}>Step {stage} of {STAGES.length}</span>
             </div>
             <h2 className="vb-card-title">{stageQuestion(stage)}</h2>
             <p className="vb-card-sub">{stageDescription(stage)}</p>
@@ -2861,7 +2995,7 @@ const App = () => {
                 disabled={isSubmitting}
               >← Back</button>
               <span/>
-              {stage < 5 ? (
+              {stage < STAGE_REVIEW ? (
                 <button className="tg-btn tg-btn-primary" onClick={handleContinue}>
                   Continue →
                 </button>
@@ -2883,7 +3017,7 @@ const App = () => {
 };
 
 function stageQuestion(stage) {
-  return ['','Tell Us About Your Business','Who Owns 25% or More?',"What's Your Processing Volume?",'Where Should Funds Settle?','One Last Look Before You Submit'][stage] || '';
+  return ['','Tell Us About Your Business','Who Owns 25% or More?',"What's Your Processing Volume?",'Where Should Funds Settle?','Do You Want ACH Too?','One Last Look Before You Submit'][stage] || '';
 }
 function stageDescription(stage) {
   return [
@@ -2892,6 +3026,7 @@ function stageDescription(stage) {
     "Anyone with 25% or more ownership needs to be listed. We're required to verify their identity.",
     "Estimate your monthly volume — we'll match or beat your current rate before you finish.",
     "Where should funds settle? Standard funding lands by 8am ET the next business day.",
+    "Optional. Add bank transfers alongside cards, underwritten together so there is nothing extra to fill in later.",
     "Quick scan to make sure everything's right, then sign and submit.",
   ][stage] || '';
 }
