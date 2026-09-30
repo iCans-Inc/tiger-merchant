@@ -186,6 +186,16 @@ a{color:inherit;text-decoration:none;}
 /* ─── Part 2: ACH activation ─────────────────────────────── */
 .tg-ach-lede { font-size: 13px; color: var(--text-muted); margin: 0 0 14px; }
 
+/* Mirrors the grouping on the partner's own form, so a merchant filling in both sees the
+   same shape of question in the same order. */
+.tg-ach-group {
+  margin: 20px 0 10px; font-size: 15px; font-weight: 700; color: var(--text);
+  padding-bottom: 6px; border-bottom: 1px solid var(--line);
+}
+.tg-ach-group:first-child { margin-top: 0; }
+.tg-fields-2 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+@media (max-width: 720px) { .tg-fields-2 { grid-template-columns: 1fr; } }
+
 .tg-ach-note {
   display: flex; gap: 10px; align-items: flex-start;
   margin-top: 16px; padding: 12px 14px;
@@ -1261,10 +1271,18 @@ function requiredAchFields(step, achOnly) {
   return achOnly ? ['achBusinessName', 'achEin', 'achContactEmail'].concat(usage) : usage;
 }
 
+const ACH_NUMERIC_FIELDS = ['achAvgDebit', 'achMaximumAmount', 'achMonthlyCount', 'achMonthlyVolume'];
+
 function validateAchStep(step, d, achOnly) {
   const errs = {};
   requiredAchFields(step, achOnly).forEach(k => {
-    if (!d[k] || !String(d[k]).trim()) errs[k] = true;
+    if (!d[k] || !String(d[k]).trim()) { errs[k] = true; return; }
+    // Tiger wants real figures, so "abc" or a negative has to be caught here rather than
+    // reaching underwriting as a number nobody can act on.
+    if (ACH_NUMERIC_FIELDS.includes(k)) {
+      const n = Number(String(d[k]).replace(/[$,\s]/g, ''));
+      if (!isFinite(n) || n < 0) errs[k] = true;
+    }
   });
   if (step === 2) {
     // All four, every time. Underwriting cannot price ACH on a partial set, so a missing
@@ -1989,32 +2007,34 @@ const AchUsageStep = ({ d, u, achOnly, errors = {} }) => (
 
     <p className="tg-ach-lede">A few details so underwriting can set the right ACH limits for your business.</p>
 
-    <div className="tg-fields tg-fields-3">
-      <Field label="Estimated Monthly ACH Volume" required error={errors.achMonthlyVolume}>
-        <select className="tg-sel" value={d.achMonthlyVolume} onChange={e=>u('achMonthlyVolume',e.target.value)}>
-          <option value="">Select…</option>
-          {PROCESSING_VOLUMES.map(v => <option key={v}>{v}</option>)}
-        </select>
+    {/* EXACT figures, not bands, and the labels are Tiger's own wording from their form.
+        These were originally dropdowns of ranges, which is what the design frames showed, but
+        Tiger confirmed underwriting needs real numbers: a band cannot set a per-transaction
+        ceiling. The card application above keeps its ranges, because nobody asked for those
+        to change. */}
+    <h3 className="tg-ach-group">Volume</h3>
+    <div className="tg-fields tg-fields-2">
+      <Field label="Average Transaction Amount" required error={errors.achAvgDebit}>
+        <input className="tg-inp" type="number" min="0" step="0.01" inputMode="decimal" placeholder="2000.00"
+               value={d.achAvgDebit} onChange={e=>u('achAvgDebit',e.target.value)} />
       </Field>
-      <Field label="Average Debit Amount" required error={errors.achAvgDebit}>
-        <select className="tg-sel" value={d.achAvgDebit} onChange={e=>u('achAvgDebit',e.target.value)}>
-          <option value="">Select…</option>
-          {TICKET_SIZES.map(v => <option key={v}>{v}</option>)}
-        </select>
-      </Field>
-      {/* The two Tiger asked for in writing that the design frames leave out. A count and a
-          ceiling are both exact figures a merchant can state, so these are typed rather than
-          banded: banding a maximum would defeat the point of asking for it. The card
-          application's own "Highest Single Ticket" is the pattern being followed. */}
-      <Field label="Average # of Monthly ACH" required error={errors.achMonthlyCount} hint="Roughly how many ACH transactions you run in a typical month.">
-        <input className="tg-inp" type="number" min="0" step="1" placeholder="e.g. 40"
-               value={d.achMonthlyCount} onChange={e=>u('achMonthlyCount',e.target.value)} />
-      </Field>
-      <Field label="Maximum Amount" required error={errors.achMaximumAmount} hint="The largest single ACH debit you expect to run.">
-        <input className="tg-inp" placeholder="e.g. $5,000"
+      <Field label="Max Transaction Amount" required error={errors.achMaximumAmount}>
+        <input className="tg-inp" type="number" min="0" step="0.01" inputMode="decimal" placeholder="10000.00"
                value={d.achMaximumAmount} onChange={e=>u('achMaximumAmount',e.target.value)} />
       </Field>
-      <Field label="Primary Use Case" required error={errors.achUseCase}>
+      <Field label="Expected Transactions Per Month" required error={errors.achMonthlyCount}>
+        <input className="tg-inp" type="number" min="0" step="1" inputMode="numeric" placeholder="15"
+               value={d.achMonthlyCount} onChange={e=>u('achMonthlyCount',e.target.value)} />
+      </Field>
+      <Field label="Average Monthly Transaction Volume" required error={errors.achMonthlyVolume}>
+        <input className="tg-inp" type="number" min="0" step="0.01" inputMode="decimal" placeholder="30000.00"
+               value={d.achMonthlyVolume} onChange={e=>u('achMonthlyVolume',e.target.value)} />
+      </Field>
+    </div>
+
+    <h3 className="tg-ach-group">How you will use it</h3>
+    <div className="tg-fields">
+      <Field label="Primary Use Case" required error={errors.achUseCase} full>
         <select className="tg-sel" value={d.achUseCase} onChange={e=>u('achUseCase',e.target.value)}>
           <option value="">Select…</option>
           {ACH_USE_CASES.map(v => <option key={v}>{v}</option>)}
