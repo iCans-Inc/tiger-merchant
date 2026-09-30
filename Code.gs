@@ -294,8 +294,8 @@ function saveAchToSheet(d) {
     sheet = book.insertSheet('ACH');
     sheet.appendRow([
       'Date Added', 'Entry', 'Business Name', 'EIN', 'Contact Email',
-      'Card Reference', 'Est. Monthly ACH Volume', 'Average Debit Amount',
-      'Avg # Monthly ACH', 'Maximum Amount',
+      'Card Reference', 'Average Transaction Amount', 'Max Transaction Amount',
+      'Expected Transactions Per Month', 'Average Monthly Transaction Volume',
       'Primary Use Case', 'NACHA Authorized', 'Documents Received',
     ]);
   }
@@ -310,10 +310,10 @@ function saveAchToSheet(d) {
     d.ein                || '',
     d.contactEmail       || '',
     d.cardReference      || '',
-    d.achMonthlyVolume   || '',
     d.achAvgDebit        || '',
-    d.achMonthlyCount    || '',
     d.achMaximumAmount   || '',
+    d.achMonthlyCount    || '',
+    d.achMonthlyVolume   || '',
     d.achUseCase         || '',
     d.achAuthorized ? 'Yes ✓' : '',
     docNames.length + ' of 4: ' + docNames.join(', '),
@@ -397,10 +397,10 @@ function buildAchEmail(d) {
         row('EIN', d.ein) +
         row('Contact', d.contactEmail) +
         row('Card reference', d.cardReference) +
-        row('Est. monthly ACH volume', d.achMonthlyVolume) +
-        row('Average debit amount', d.achAvgDebit) +
-        row('Avg # of monthly ACH', d.achMonthlyCount) +
-        row('Maximum amount', d.achMaximumAmount) +
+        row('Average transaction amount', d.achAvgDebit) +
+        row('Max transaction amount', d.achMaximumAmount) +
+        row('Expected transactions per month', d.achMonthlyCount) +
+        row('Average monthly transaction volume', d.achMonthlyVolume) +
         row('Primary use case', d.achUseCase) +
         row('NACHA authorization', d.achAuthorized ? 'Authorized ✓' : 'NOT AUTHORIZED') +
       '</table>' +
