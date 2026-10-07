@@ -2453,7 +2453,12 @@ const WelcomeScreen = ({ onStart }) => (
           <PricingRow headline={<><strong>$0</strong> Setup Fees</>} sub="Get Started at No Cost."/>
           <PricingRow headline={<>Just <strong>$20</strong>/Month</>} sub="Simple, Affordable, Predictable."/>
           <PricingRow headline={<><strong>No</strong> Contracts</>} sub="Stay Because You Love It."/>
-          <PricingRow headline={<><strong>2.99%</strong></>} sub="Flat Rate."/>
+          <PricingRow headline={<><strong>2.99%</strong></>} sub="Flat Rate on Cards."/>
+          {/* Sits directly under the card rate so the two read together. Tiger asked for the
+              ACH rate up front: a merchant deciding whether to tick ACH on stage 5 should
+              already know what it costs, rather than meeting the number for the first time on
+              the confirmation screen once they have committed to it. */}
+          <PricingRow headline={<><strong>1%</strong> on ACH</>} sub="Bank Transfers. 3-Day Settlement."/>
         </div>
         <div className="vb-rate-match">
           <div className="vb-rate-match-badge">
